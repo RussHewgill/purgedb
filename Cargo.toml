@@ -6,3 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.76"
+eframe = { version = "0.24.1", features = ["persistence"] }
+egui = "0.24.1"
+env_logger = "0.10.1"
+rusqlite = { version = "0.30.0", features = ["bundled"] }
+serde = { version = "1.0.193", features = ["derive"] }
+
