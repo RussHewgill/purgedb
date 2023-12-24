@@ -4,19 +4,21 @@
 #![allow(dead_code)]
 #![allow(unused_doc_comments)]
 
-// mod app;
+mod gui;
 mod db;
+mod search;
+mod types;
 
-#[cfg(feature = "nope")]
+// #[cfg(feature = "nope")]
 fn main() -> eframe::Result<()> {
-    // use app::App;
+    use gui::App;
 
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([400.0, 300.0])
-            .with_min_inner_size([300.0, 220.0]),
+            .with_inner_size([800.0, 600.0])
+            .with_min_inner_size([400.0, 300.0]),
         ..Default::default()
     };
     eframe::run_native(
@@ -26,10 +28,20 @@ fn main() -> eframe::Result<()> {
     )
 }
 
+#[cfg(feature = "nope")]
 fn main() {
     use db::Db;
 
-    let db = Db::new();
+    let db = Db::new().unwrap();
 
-    db.init().unwrap();
+    db.test_filaments().unwrap();
+
+    let xs = db.get_all_filaments().unwrap();
+
+    // let xs = db.get_all_searchable_keywords().unwrap();
+
+    // eprintln!("wat 0");
+    // let r = xs.search_names("poly");
+    eprintln!("xs = {:?}", xs);
+
 }
