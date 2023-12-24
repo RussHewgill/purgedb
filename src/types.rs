@@ -1,15 +1,16 @@
-use egui::{text::LayoutJob, RichText};
+use egui::{text::{LayoutJob, TextWrapping}, RichText};
 use hex_color::HexColor;
 
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, serde::Serialize,serde::Deserialize)]
 pub struct Filament {
   pub id: u32,
   pub name: String,
   pub manufacturer: String,
   // pub color: (u8, u8, u8),
-  pub color: HexColor,
+  pub color_base: HexColor,
   // pub material: Material,
+  pub colors: Vec<HexColor>,
 }
 
 impl Filament {
@@ -17,16 +18,65 @@ impl Filament {
     id: u32, 
     name: String, 
     manufacturer: String, 
-    color: HexColor,
+    color_base: HexColor,
+    colors: &[HexColor],
   ) -> Self { 
-      Self { id, name, manufacturer, color } 
+      Self { id, name, manufacturer, color_base, colors: colors.to_vec() } 
     }
   
-  pub fn colored_box(&self) -> RichText {
-    RichText::new("\u{2B1B}").color(
-      egui::Color32::from_rgb(self.color.r, self.color.g, self.color.b)
-    )
+  pub fn colored_box(&self, vert: bool) -> LayoutJob {
+    // RichText::new("\u{2B1B}").color(
+    //   egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b)
+    // )
+
+    let text = if vert {
+      "\u{2B1B}\n"
+    } else {
+      "\u{2B1B}"
+    };
+
+    let mut job = LayoutJob::default();
+
+    // job.wrap.max_width = 1.;
+    // job.wrap.break_anywhere = true;
+
+    if let Some(c) = self.colors.get(1) {
+      job.append(text, 0.0, egui::TextFormat {
+        color: egui::Color32::from_rgb(c.r, c.g, c.b),
+        ..Default::default()
+      });
+    } else {
+      job.append(text, 0.0, egui::TextFormat {
+        color: egui::Color32::from_rgba_premultiplied(0,0,0,0),
+        ..Default::default()
+      });
+    }
+
+    if let Some(c) = self.colors.get(0) {
+      job.append(text, 0.0, egui::TextFormat {
+        color: egui::Color32::from_rgb(c.r, c.g, c.b),
+        ..Default::default()
+      });
+    } else {
+      job.append(text, 0.0, egui::TextFormat {
+        color: egui::Color32::from_rgba_premultiplied(0,0,0,0),
+        ..Default::default()
+      });
+    }
+
+    job.append(text, 0.0, egui::TextFormat {
+      color: egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b),
+      ..Default::default()
+    });
+
+    job
   }
+
+  // pub fn colored_box(&self) -> RichText {
+  //   RichText::new("\u{2B1B}").color(
+  //     egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b)
+  //   )
+  // }
 
 
   // pub fn colored_box(&self) -> LayoutJob {
@@ -39,16 +89,12 @@ impl Filament {
   // }
 
   pub fn colored_name(&self) -> LayoutJob {
-    let mut job = LayoutJob::default();
-
-    job.append("\u{2B1B}", 0.0, egui::TextFormat {
-      color: egui::Color32::from_rgb(self.color.r, self.color.g, self.color.b),
-      ..Default::default()
-    });
+    // let mut job = LayoutJob::default();
+    let mut job = self.colored_box(false);
 
     job.append(
-      // &format!("{} {}", &self.name, &self.display_color()),
-      &self.name,
+      &format!("{} {}", &self.manufacturer, &self.name),
+      // &self.name,
       2.0,
       egui::TextFormat {
           // font_id: FontId::new(14.0, FontFamily::Proportional),
@@ -60,18 +106,13 @@ impl Filament {
     job
   }
 
-  // pub fn display(&self) -> LayoutJob {
-  //   let Self { name, manufacturer, color, .. } = self;
-  //   let color = self.display_color();
-  //   // format!("{manufacturer} {name} {color} ({material})")
-  //   // format!("{manufacturer} {name} {color}")
-  //   // format!("{manufacturer} {name}")
-
-  //   // RichText::new()
-  //   let mut job = LayoutJob::default();
-
-  //   job
-  // }
+  pub fn display(&self) -> String {
+    let Self { name, manufacturer, color_base: color, .. } = self;
+    let color = self.display_color();
+    // format!("{manufacturer} {name} {color} ({material})")
+    // format!("{manufacturer} {name} {color}")
+    format!("{manufacturer} {name}")
+  }
 
   // pub fn display(&self) -> String {
   //   let Self { name, manufacturer, color, .. } = self;
@@ -82,7 +123,7 @@ impl Filament {
   // }
 
   pub fn display_color(&self) -> String {
-    format!("#{:02X}{:02X}{:02X}", self.color.r, self.color.g, self.color.b)
+    format!("#{:02X}{:02X}{:02X}", self.color_base.r, self.color_base.g, self.color_base.b)
   }
 }
 

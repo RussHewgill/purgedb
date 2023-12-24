@@ -1,14 +1,26 @@
+use hex_color::HexColor;
+
 use super::App;
 
 
-#[derive(Debug, Default)]
+#[derive(Debug, serde::Serialize,serde::Deserialize)]
 pub struct NewFilament {
   pub name:           String,
   pub manufacturer:   String,
   // pub material:       String,
-  pub color1:         [u8; 3],
-  // pub color2:         [u8; 3],
-  // pub color3:         [u8; 3],
+  pub color_base:     ([u8; 3], String),
+  pub colors:         Vec<([u8; 3], String)>,
+}
+
+impl Default for NewFilament {
+  fn default() -> Self {
+      Self {
+        name: String::new(),
+        manufacturer: String::new(),
+        color_base: ([0, 0, 0], "000000".to_string()),
+        colors: vec![],
+      }
+  }
 }
 
 impl NewFilament {
@@ -16,15 +28,19 @@ impl NewFilament {
     name: &str, 
     manufacturer: &str, 
     // material: &str, 
-    color1: [u8; 3], 
+    color_base: [u8; 3],
+    colors: &[[u8; 3]],
     // color2: [u8; 3], 
     // color3: [u8; 3],
-  ) -> Self { 
+  ) -> Self {
     Self { 
       name: name.to_string(),
       manufacturer: manufacturer.to_string(), 
       // material: material.to_string(),
-      color1,
+      color_base: (color_base, format!("{:02X}{:02X}{:02X}", color_base[0], color_base[1], color_base[2])),
+      // colors: colors.to_vec(),
+      colors: colors.iter().map(|c| (*c, String::new())).collect(),
+      // color1,
       // color2,
       // color3,
     }
@@ -35,6 +51,17 @@ impl NewFilament {
       && self.manufacturer != ""
       // && self.material != ""
       // && self.color1 != ""
+  }
+}
+
+fn color_edit_button(ui: &mut egui::Ui, c: &mut [u8; 3], s: &mut String) {
+  ui.color_edit_button_srgb(c);
+  // let edit = ui.text_edit_singleline(s);
+  // let edit = egui::TextEdit::id_source(self, id_source)
+  if ui.add_sized(ui.available_size(), egui::TextEdit::singleline(s)).changed() {
+    if let Ok(col) = HexColor::parse(&s) {
+      *c = [col.r, col.g, col.b];
+    }
   }
 }
 
@@ -57,10 +84,30 @@ impl App {
         ui.add(egui::TextEdit::singleline(&mut self.new_filament.manufacturer));
         ui.end_row();
 
-        ui.label("Color 1: ");
-        // let response_name = ui.add(egui::TextEdit::singleline(&mut self.new_filament.color1));
-        ui.color_edit_button_srgb(&mut self.new_filament.color1);
+        if ui.button("+").clicked() {
+          if self.new_filament.colors.len() < 2 {
+            self.new_filament.colors.push(([0; 3], String::new()));
+          }
+        }
+        if ui.button("-").clicked() {
+          self.new_filament.colors.pop();
+        }
         ui.end_row();
+
+        egui::Frame::none()
+          .show(ui, |ui| {
+            ui.label("Color 1: ");
+            // let response_name = ui.add(egui::TextEdit::singleline(&mut self.new_filament.color1));
+            // ui.color_edit_button_srgb(&mut self.new_filament.color_base);
+            color_edit_button(ui, &mut self.new_filament.color_base.0, &mut self.new_filament.color_base.1);
+          });
+        ui.end_row();
+
+        for (i, c) in self.new_filament.colors.iter_mut().enumerate() {
+          ui.label(format!("Color {}: ", i + 2));
+          // ui.color_edit_button_srgb(c);
+          ui.end_row();
+        }
 
         // ui.label("Color 2: ");
         // let response_name = ui.add(egui::TextEdit::singleline(&mut self.new_filament.color2));

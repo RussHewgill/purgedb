@@ -7,7 +7,7 @@ use crate::db::Db;
 
 use self::{new_filament::NewFilament, get_purge::GetPurge, enter_purge::EnterPurge};
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, serde::Serialize,serde::Deserialize)]
 pub enum Tab {
   GetPurgeValues,
   EnterPurgeValues,
@@ -22,7 +22,9 @@ impl Default for Tab {
   }
 }
 
+#[derive(serde::Serialize,serde::Deserialize)]
 pub struct App {
+  #[serde(skip)]
   db: Db,
   current_tab: Tab,
 
@@ -53,10 +55,8 @@ impl App {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        // // Load previous app state (if any).
-        // // Note that you must enable the `persistence` feature for this to work.
         // if let Some(storage) = cc.storage {
-        //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        //   return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
         Default::default()
@@ -65,18 +65,23 @@ impl App {
 
 // #[cfg(feature = "nope")]
 impl eframe::App for App {
+
+  fn save(&mut self, storage: &mut dyn eframe::Storage) {
+    eframe::set_value(storage, eframe::APP_KEY, self);
+  }
+
   fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 
     // ctx.set_visuals(egui::style::Visuals::dark());
 
     egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-      ui.separator();
+      // ui.separator();
       ui.horizontal(|ui| {
         ui.selectable_value(&mut self.current_tab, Tab::GetPurgeValues, "Get Purge Values");
         ui.selectable_value(&mut self.current_tab, Tab::EnterPurgeValues, "Enter Purge Values");
         ui.selectable_value(&mut self.current_tab, Tab::NewFilament, "New Filament");
       });
-      ui.separator();
+      // ui.separator();
     });
 
 
@@ -88,6 +93,14 @@ impl eframe::App for App {
         Tab::NewFilament => self.show_new_filament(ui),
       }
     });
+
+    // egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+    //   ui.horizontal(|ui| {
+    //     if ui.button("Reload Database").clicked() {
+
+    //     }
+    //   });
+    // });
   }
 }
 

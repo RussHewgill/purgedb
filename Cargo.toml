@@ -12,7 +12,7 @@ egui = "0.24.1"
 egui_extras = "0.24.2"
 env_logger = "0.10.1"
 fuzzy-matcher = "0.3.7"
-hex_color = "3.0.0"
+hex_color = { version = "3.0.0", features = ["serde"] }
 rand = "0.8.5"
 rusqlite = { version = "0.30.0", features = ["bundled"] }
 serde = { version = "1.0.193", features = ["derive"] }

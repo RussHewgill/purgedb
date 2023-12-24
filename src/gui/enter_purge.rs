@@ -1,7 +1,7 @@
 use crate::types::Filament;
 use super::{filament_picker::FilamentPicker, App};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, serde::Serialize,serde::Deserialize)]
 pub struct EnterPurge {
   // filament1: Filament,
   // filament2: Filament,
@@ -35,6 +35,12 @@ impl App {
             ui.label("To ");
             ui.label(f2.colored_name());
             let resp = ui.text_edit_singleline(&mut self.enter_purge.purge1);
+            match self.db.get_purge_values(f1.id, f2.id) {
+              Ok(v) => {
+                ui.label(format!("Existing Value: {}", v));
+              },
+              _ => {}
+            }
           });
 
           ui.horizontal(|ui| {
@@ -43,6 +49,12 @@ impl App {
             ui.label("To ");
             ui.label(f1.colored_name());
             let resp = ui.text_edit_singleline(&mut self.enter_purge.purge2);
+            match self.db.get_purge_values(f1.id, f2.id) {
+              Ok(v) => {
+                ui.label(format!("Existing Value: {}", v));
+              },
+              _ => {}
+            }
           });
 
           if ui.button("Save Vaules").clicked() {

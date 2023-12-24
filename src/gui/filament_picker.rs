@@ -4,7 +4,7 @@ use crate::types::Filament;
 
 use super::App;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize,serde::Deserialize)]
 pub struct FilamentPicker {
   id: u32,
   pub selected: Option<Filament>,
@@ -20,6 +20,11 @@ impl Default for FilamentPicker {
 }
 
 impl FilamentPicker {
+
+  pub fn reset(&mut self) {
+    self.selected = None;
+  }
+
   pub fn filament_picker(&mut self, filaments: &[Filament], ui: &mut egui::Ui) -> Response {
   // pub fn filament_picker(&mut self, filaments: &[(u32, String)], ui: &mut egui::Ui) {
 
