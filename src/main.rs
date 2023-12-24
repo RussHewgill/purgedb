@@ -34,11 +34,13 @@ fn main() {
 
     let db = Db::new().unwrap();
 
-    db.test_filaments().unwrap();
+    // db.test_filaments().unwrap();
 
-    let xs = db.get_all_filaments().unwrap();
+    // let xs = db.get_all_filaments().unwrap();
 
     // let xs = db.get_all_searchable_keywords().unwrap();
+
+    let xs = db.get_purge_values(1, 2).unwrap();
 
     // eprintln!("wat 0");
     // let r = xs.search_names("poly");

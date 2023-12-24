@@ -47,11 +47,12 @@ impl Filament {
     });
 
     job.append(
-      &format!("{} {}", &self.name, &self.display_color()),
+      // &format!("{} {}", &self.name, &self.display_color()),
+      &self.name,
       2.0,
       egui::TextFormat {
           // font_id: FontId::new(14.0, FontFamily::Proportional),
-          // color: Color32::,
+          color: egui::Color32::BLACK,
           ..Default::default()
       },
     );

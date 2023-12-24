@@ -39,37 +39,48 @@ impl App {
       });
 
     // table
-    TableBuilder::new(ui)
-      .column(Column::auto())
-      .columns(Column::exact(60.), self.get_purge.filaments.len())
-      .header(30., |mut header| {
-        header.col(|ui| {});
-        for f in self.get_purge.filaments.iter().rev() {
-          header.col(|ui| {
-            // ui.add(|ui| {
-            //   f.colored_box();
-            // });
-            // ui.heading(&f.name);
-            ui.heading(f.colored_box());
-          });
-        }
-      })
-      .body(|mut body| {
-        for from in self.get_purge.filaments.iter().rev() {
-          body.row(30., |mut row| {
-            row.col(|ui| {
-              // ui.label(&from.display());
-              ui.fonts(|fonts| fonts.layout_job(from.colored_name()));
+    egui::Frame::none()
+    .stroke(Stroke::new(1., egui::Color32::from_gray(30)))
+    // .fill(egui::Color32::from_gray(220))
+    .show(ui, |ui| {
+      ui.visuals_mut().override_text_color = Some(egui::Color32::BLACK);
+      TableBuilder::new(ui)
+        .striped(true)
+        .column(Column::auto().at_least(150.))
+        .columns(Column::exact(60.), self.get_purge.filaments.len())
+        .header(30., |mut header| {
+          header.col(|ui| {});
+          for f in self.get_purge.filaments.iter().rev() {
+            header.col(|ui| {
+              ui.heading(f.colored_box());
             });
-            for to in self.get_purge.filaments.iter().rev() {
+          }
+        })
+        .body(|mut body| {
+          for from in self.get_purge.filaments.iter() {
+            body.row(20., |mut row| {
               row.col(|ui| {
-                ui.label("123");
+                ui.label(from.colored_name());
+                // ui.fonts(|fonts| fonts.layout_job(from.colored_name()));
               });
-            }
-          })
-        }
-      })
-      ;
-
+              for to in self.get_purge.filaments.iter() {
+                row.col(|ui| {
+                  if from == to {
+                    egui::Frame::none()
+                      .fill(egui::Color32::from_gray(32))
+                      .show(ui, |ui| {
+                        ui.allocate_space(ui.available_size());
+                      });
+                  } else if let Ok(purge) = self.db.get_purge_values(from.id, to.id) {
+                    ui.label(format!("{purge}"));
+                  }
+                  // ui.label("123");
+                });
+              }
+            })
+          }
+        })
+        ;
+    });
   }
 }

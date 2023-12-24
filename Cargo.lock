@@ -2037,6 +2037,7 @@ dependencies = [
  "env_logger",
  "fuzzy-matcher",
  "hex_color",
+ "rand",
  "rusqlite",
  "serde",
 ]

@@ -5,7 +5,7 @@ pub mod filament_picker;
 
 use crate::db::Db;
 
-use self::{new_filament::NewFilament, get_purge::GetPurge};
+use self::{new_filament::NewFilament, get_purge::GetPurge, enter_purge::EnterPurge};
 
 #[derive(PartialEq, Eq)]
 pub enum Tab {
@@ -16,7 +16,9 @@ pub enum Tab {
 
 impl Default for Tab {
   fn default() -> Self {
-    Self::GetPurgeValues
+    Self::NewFilament
+    // Self::GetPurgeValues
+    // Self::EnterPurgeValues
   }
 }
 
@@ -26,17 +28,20 @@ pub struct App {
 
   new_filament: NewFilament,
   get_purge: GetPurge,
+  enter_purge: EnterPurge,
 }
 
 impl Default for App {
   fn default() -> Self {
     let db = Db::new().unwrap();
+    db.test_filaments().unwrap();
     Self {
       db,
       current_tab: Tab::default(),
 
       new_filament: NewFilament::default(),
       get_purge: GetPurge::default(),
+      enter_purge: EnterPurge::default(),
     }
   }
 }
@@ -62,6 +67,8 @@ impl App {
 impl eframe::App for App {
   fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 
+    // ctx.set_visuals(egui::style::Visuals::dark());
+
     egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
       ui.separator();
       ui.horizontal(|ui| {
@@ -77,7 +84,7 @@ impl eframe::App for App {
 
       match self.current_tab {
         Tab::GetPurgeValues => self.show_get_purge(ui),
-        Tab::EnterPurgeValues => todo!(),
+        Tab::EnterPurgeValues => self.show_enter_purge(ui),
         Tab::NewFilament => self.show_new_filament(ui),
       }
     });
