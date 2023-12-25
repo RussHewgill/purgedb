@@ -39,7 +39,7 @@ impl NewFilament {
       // material: material.to_string(),
       color_base: (color_base, format!("{:02X}{:02X}{:02X}", color_base[0], color_base[1], color_base[2])),
       // colors: colors.to_vec(),
-      colors: colors.iter().map(|c| (*c, String::new())).collect(),
+      colors: colors.iter().map(|c| (*c, format!("{:02X}{:02X}{:02X}", c[0], c[1], c[2]))).collect(),
       // color1,
       // color2,
       // color3,
@@ -55,12 +55,18 @@ impl NewFilament {
 }
 
 fn color_edit_button(ui: &mut egui::Ui, c: &mut [u8; 3], s: &mut String) {
-  ui.color_edit_button_srgb(c);
-  // let edit = ui.text_edit_singleline(s);
-  // let edit = egui::TextEdit::id_source(self, id_source)
-  if ui.add_sized(ui.available_size(), egui::TextEdit::singleline(s)).changed() {
-    if let Ok(col) = HexColor::parse(&s) {
+  if ui.color_edit_button_srgb(c).changed() {
+    *s = format!("{:02X}{:02X}{:02X}", c[0], c[1], c[2]);
+  }
+  let edit = egui::TextEdit::singleline(s)
+    .clip_text(false);
+  if ui.add(edit).changed() {
+    let s2 = format!("#{}", s);
+    if let Ok(col) = HexColor::parse(&s2) {
       *c = [col.r, col.g, col.b];
+      eprintln!("c = {:?}", c);
+    } else {
+      eprintln!("can't parse?");
     }
   }
 }
@@ -100,12 +106,17 @@ impl App {
             // let response_name = ui.add(egui::TextEdit::singleline(&mut self.new_filament.color1));
             // ui.color_edit_button_srgb(&mut self.new_filament.color_base);
             color_edit_button(ui, &mut self.new_filament.color_base.0, &mut self.new_filament.color_base.1);
+            // ui.allocate_space(ui.available_size());
           });
         ui.end_row();
 
         for (i, c) in self.new_filament.colors.iter_mut().enumerate() {
-          ui.label(format!("Color {}: ", i + 2));
-          // ui.color_edit_button_srgb(c);
+          egui::Frame::none()
+            .show(ui, |ui| {
+              ui.label(format!("Color {}: ", i + 2));
+              // ui.color_edit_button_srgb(c);
+              color_edit_button(ui, &mut c.0, &mut c.1);
+          });
           ui.end_row();
         }
 
