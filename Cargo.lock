@@ -2033,6 +2033,7 @@ name = "purgedb"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bitflags 2.4.1",
  "eframe",
  "egui",
  "egui_extras",

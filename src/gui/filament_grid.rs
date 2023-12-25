@@ -124,12 +124,6 @@ impl App {
             .send_purge_values(self.filament_grid.num_filaments)
             .unwrap();
         }
-
-        // if any_changed {
-        //   if ui.button("Save Values").clicked() {
-        //     // self.db.set_purge_values(id_from, id_to, purge)
-        //   }
-        // }
       });
   }
 

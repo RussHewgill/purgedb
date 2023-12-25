@@ -1,7 +1,9 @@
 pub mod enter_purge;
 pub mod filament_grid;
 pub mod filament_picker;
+// pub mod filament_picker_widget;
 // pub mod get_purge;
+// pub mod edit_filament;
 pub mod new_filament;
 pub mod text_val;
 
@@ -14,6 +16,7 @@ pub enum Tab {
   // GetPurgeValues,
   EnterPurgeValues,
   NewFilament,
+  // EditFilament,
   FilamentGrid,
 }
 
@@ -33,6 +36,7 @@ pub struct App {
   current_tab: Tab,
 
   new_filament: NewFilament,
+  // edit_filament: EditFilament,
   // get_purge: GetPurge,
   enter_purge: EnterPurge,
   filament_grid: FilamentGrid,
@@ -47,6 +51,7 @@ impl Default for App {
       current_tab: Tab::default(),
 
       new_filament: NewFilament::default(),
+      // edit_filament: EditFilament::default(),
       // get_purge: GetPurge::default(),
       enter_purge: EnterPurge::default(),
       filament_grid: FilamentGrid::default(),
@@ -101,6 +106,7 @@ impl eframe::App for App {
       // Tab::GetPurgeValues => self.show_get_purge(ui),
       Tab::EnterPurgeValues => self.show_enter_purge(ui),
       Tab::NewFilament => self.show_new_filament(ui),
+      // Tab::EditFilament => self.show_edit_filament(ui),
       Tab::FilamentGrid => self.show_filament_grid(ui),
     });
 

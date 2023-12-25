@@ -4,7 +4,7 @@ use crate::types::Filament;
 
 use super::App;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FilamentPicker {
   id: u32,
   pub selected: Option<Filament>,

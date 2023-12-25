@@ -15,8 +15,8 @@ impl App {
   pub fn show_enter_purge(&mut self, ui: &mut egui::Ui) {
     egui::Frame::none()
       // .stroke(Stroke::new(1.0, egui::Color32::from_gray(65)))
-      .outer_margin(5.)
-      .inner_margin(5.)
+      // .outer_margin(5.)
+      // .inner_margin(5.)
       .show(ui, |ui| {
         let filaments = self.db.get_all_filaments().unwrap();
         self.enter_purge.picker1.filament_picker(&filaments, ui);

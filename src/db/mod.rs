@@ -16,9 +16,20 @@ impl Default for Db {
 
 impl Db {
   pub fn get_all_filaments(&self) -> Result<Vec<Filament>> {
-    let mut stmt = self
-      .db
-      .prepare("SELECT id, name, manufacturer, color1, color2, color3 FROM filaments")?;
+    let mut stmt = self.db.prepare(
+      "SELECT 
+        id, 
+        name, 
+        manufacturer, 
+        color1, 
+        color2, 
+        color3, 
+        material, 
+        notes 
+      FROM filaments
+      ORDER BY manufacturer ASC, name ASC
+      ",
+    )?;
     let iter = stmt.query_map([], |row| {
       let id: u32 = row.get(0)?;
       let name: String = row.get(1)?;
@@ -26,7 +37,8 @@ impl Db {
       let color: i32 = row.get(3)?;
       let color2: i32 = row.get(4)?;
       let color3: i32 = row.get(5)?;
-      // let material: String = row.get(4)?;
+      let material: String = row.get(6)?;
+      let notes: String = row.get(7)?;
 
       // let color = csscolorparser::parse(&color).unwrap();
       let color = hex_color::HexColor::from_u24(color as u32);
@@ -40,7 +52,15 @@ impl Db {
         colors.push(hex_color::HexColor::from_u24(color3 as u32))
       }
 
-      Ok(Filament::new(id, name, manufacturer, color, &colors))
+      Ok(Filament::new(
+        id,
+        name,
+        manufacturer,
+        color,
+        &colors,
+        material,
+        notes,
+      ))
     })?;
     Ok(iter.flatten().collect())
   }
@@ -135,8 +155,8 @@ impl Db {
     // eprintln!("c2 = {:?}", c2);
 
     match self.db.execute(
-      "INSERT INTO filaments (name, manufacturer, color1, color2, color3) VALUES (?1, ?2, ?3, ?4, ?5)", 
-      (&filament.name, &filament.manufacturer, c1, c2, c3)
+      "INSERT INTO filaments (name, manufacturer, color1, color2, color3, material, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)", 
+      (&filament.name, &filament.manufacturer, c1, c2, c3, &filament.material, &filament.notes)
       // "INSERT INTO filaments (name, manufacturer, c1, c2, c3) VALUES (?1, ?2, ?3, ?4, ?5)", 
       // (&filament.name, &filament.manufacturer, c1, c2, c3)
     ) {
@@ -180,6 +200,8 @@ impl Db {
           color1        INTEGER NOT NULL,
           color2        INTEGER NOT NULL,
           color3        INTEGER NOT NULL,
+          material      TEXT,
+          notes         TEXT,
           UNIQUE(name, manufacturer, color1, color2, color3)
       )",
       (), // empty list of parameters.
