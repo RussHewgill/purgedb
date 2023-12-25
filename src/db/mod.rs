@@ -1,6 +1,6 @@
+use crate::{gui::new_filament::NewFilament, search::Keywords, types::Filament};
 use hex_color::HexColor;
 use rusqlite::{params, Connection, Result};
-use crate::{gui::new_filament::NewFilament, search::Keywords, types::Filament};
 
 pub struct Db {
   db: Connection,
@@ -8,15 +8,17 @@ pub struct Db {
 
 impl Default for Db {
   fn default() -> Self {
-      let db = Self::new().unwrap();
-      db.test_filaments().unwrap();
-      db
+    let db = Self::new().unwrap();
+    db.test_filaments().unwrap();
+    db
   }
 }
 
 impl Db {
   pub fn get_all_filaments(&self) -> Result<Vec<Filament>> {
-    let mut stmt = self.db.prepare("SELECT id, name, manufacturer, color1, color2, color3 FROM filaments")?;
+    let mut stmt = self
+      .db
+      .prepare("SELECT id, name, manufacturer, color1, color2, color3 FROM filaments")?;
     let iter = stmt.query_map([], |row| {
       let id: u32 = row.get(0)?;
       let name: String = row.get(1)?;
@@ -44,14 +46,10 @@ impl Db {
   }
 
   pub fn get_all_searchable_keywords(&self) -> Result<Keywords> {
-
     let names = self.get_all_names()?;
     let colors = self.get_all_colors()?;
 
-    Ok(Keywords::new(
-      names,
-      colors,
-    ))
+    Ok(Keywords::new(names, colors))
   }
 
   fn get_all_names(&self) -> Result<Vec<(u32, String)>> {
@@ -73,7 +71,6 @@ impl Db {
     })?;
     Ok(colors_iter.flatten().collect())
   }
-
 }
 
 impl Db {
@@ -83,12 +80,30 @@ impl Db {
     // self.add_filament(&NewFilament::new("Polyterra", "Polymaker", "#5969cf", "PLA"))?;
     // self.add_filament(&NewFilament::new("Burnt Titanium", "Voxelab", "#121145", "PLA"))?;
 
-    // self.add_filament(&NewFilament::new("PolyLite", "Polymaker", [0xff, 0xff, 0xff], &[]))?;
-    // self.add_filament(&NewFilament::new("PolyLite", "Polymaker", [0x00, 0x00, 0x00], &[]))?;
-    // self.add_filament(&NewFilament::new("Candy Rainbow", "ERYONE", 
-    //   [0xec, 0x9b, 0xa4], &[[0xbb, 0xe3, 0x3d]]))?;
-    // self.add_filament(&NewFilament::new("Blue-Green-Orange", "ERYONE", 
-    //   [0x06, 0x9a, 0x2e], &[[0x2a, 0x60, 0x99], [0xff, 0x80, 0x00]]))?;
+    self.add_filament(&NewFilament::new(
+      "PolyLite",
+      "Polymaker",
+      [0xff, 0xff, 0xff],
+      &[],
+    ))?;
+    self.add_filament(&NewFilament::new(
+      "PolyLite",
+      "Polymaker",
+      [0x00, 0x00, 0x00],
+      &[],
+    ))?;
+    self.add_filament(&NewFilament::new(
+      "Candy Rainbow",
+      "ERYONE",
+      [0xec, 0x9b, 0xa4],
+      &[[0xbb, 0xe3, 0x3d]],
+    ))?;
+    self.add_filament(&NewFilament::new(
+      "Blue-Green-Orange",
+      "ERYONE",
+      [0x06, 0x9a, 0x2e],
+      &[[0x2a, 0x60, 0x99], [0xff, 0x80, 0x00]],
+    ))?;
 
     Ok(())
   }
@@ -96,7 +111,6 @@ impl Db {
 
 impl Db {
   pub fn add_filament(&self, filament: &NewFilament) -> Result<()> {
-
     // fn get_col(c: [u8; 3]) -> String {
     //   format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2])
     // }
@@ -109,13 +123,13 @@ impl Db {
           let c = HexColor::rgb(c[0], c[1], c[2]);
           c.to_u24() as i32
         }
-        None => -1
+        None => -1,
       }
     }
 
     let c1 = get_col(Some(filament.color_base.0));
-    let c2 = get_col(filament.colors.get(0).map(|(c,_)| *c));
-    let c3 = get_col(filament.colors.get(1).map(|(c,_)| *c));
+    let c2 = get_col(filament.colors.get(0).map(|(c, _)| *c));
+    let c3 = get_col(filament.colors.get(1).map(|(c, _)| *c));
 
     // eprintln!("c1 = {:?}", c1);
     // eprintln!("c2 = {:?}", c2);
@@ -136,27 +150,24 @@ impl Db {
 
   pub fn set_purge_values(&self, id_from: u32, id_to: u32, purge: u32) -> Result<()> {
     match self.db.execute(
-      "INSERT OR REPLACE INTO purge_values (id_from, id_to, purge) VALUES (?1, ?2, ?3)", 
-      (id_from, id_to, purge)
+      "INSERT OR REPLACE INTO purge_values (id_from, id_to, purge) VALUES (?1, ?2, ?3)",
+      (id_from, id_to, purge),
     ) {
-        Ok(_) => (),
-        Err(e) => eprintln!("e = {:?}", e),
+      Ok(_) => (),
+      Err(e) => eprintln!("e = {:?}", e),
     }
     Ok(())
   }
 
   pub fn get_purge_values(&self, id_from: u32, id_to: u32) -> Result<u32> {
     self.db.query_row(
-      "SELECT purge FROM purge_values WHERE id_from=?1 AND id_to=?2", 
+      "SELECT purge FROM purge_values WHERE id_from=?1 AND id_to=?2",
       (id_from, id_to),
-      |row| {
-        row.get(0)
-      }
+      |row| row.get(0),
     )
   }
 
   pub fn new() -> Result<Self> {
-
     let path = "test.db";
 
     let conn = Connection::open(path)?;
@@ -177,7 +188,8 @@ impl Db {
 
     conn.execute(
       "CREATE TABLE IF NOT EXISTS purge_values (
-          id_from     INTEGER PRIMARY KEY,
+          id          INTEGER PRIMARY KEY,
+          id_from     INTEGER NOT NULL,
           id_to       INTEGER NOT NULL,
           purge       INTEGER NOT NULL,
           UNIQUE(id_from, id_to)
@@ -185,8 +197,6 @@ impl Db {
       (), // empty list of parameters.
     )?;
 
-    Ok(Self {
-      db: conn,
-    })
+    Ok(Self { db: conn })
   }
 }

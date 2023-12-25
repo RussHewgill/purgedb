@@ -19,7 +19,7 @@ impl Default for FilamentGrid {
 
     Self {
       pickers: Default::default(),
-      num_filaments: 2,
+      num_filaments: 4,
       cells,
     }
   }
@@ -119,11 +119,50 @@ impl App {
             }
           });
 
+        if ui.button("send to orca").clicked() {
+          self
+            .send_purge_values(self.filament_grid.num_filaments)
+            .unwrap();
+        }
+
         // if any_changed {
         //   if ui.button("Save Values").clicked() {
         //     // self.db.set_purge_values(id_from, id_to, purge)
         //   }
         // }
       });
+  }
+
+  fn send_purge_values(&self, num_filaments: usize) -> anyhow::Result<()> {
+    // if num_filaments != 4 {
+    //   panic!("num_filaments TODO");
+    // }
+
+    crate::input_sender::alt_tab()?;
+    std::thread::sleep(std::time::Duration::from_millis(300));
+    // eprintln!("alt-tab");
+
+    for from_id in 0..num_filaments {
+      let Some(from) = &self.filament_grid.pickers[from_id].selected else {
+        panic!("missing from");
+      };
+      for to_id in 0..num_filaments {
+        let Some(to) = &self.filament_grid.pickers[to_id].selected else {
+          panic!("missing to");
+        };
+        if from_id == to_id {
+          continue;
+        }
+        if let Ok(purge) = self.db.get_purge_values(from.id, to.id) {
+          eprintln!("sending purge = {:?}", purge);
+          // eprintln!("tab");
+          crate::input_sender::send_number(purge, true)?;
+        }
+      }
+      // eprintln!("tab");
+      crate::input_sender::tab()?;
+    }
+
+    Ok(())
   }
 }
