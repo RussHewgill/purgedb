@@ -27,7 +27,7 @@ impl Db {
         material, 
         notes 
       FROM filaments
-      ORDER BY manufacturer ASC, name ASC
+      ORDER BY manufacturer COLLATE NOCASE ASC, name ASC
       ",
     )?;
     let iter = stmt.query_map([], |row| {
@@ -100,37 +100,50 @@ impl Db {
     // self.add_filament(&NewFilament::new("Polyterra", "Polymaker", "#5969cf", "PLA"))?;
     // self.add_filament(&NewFilament::new("Burnt Titanium", "Voxelab", "#121145", "PLA"))?;
 
-    self.add_filament(&NewFilament::new(
-      "PolyLite",
-      "Polymaker",
-      [0xff, 0xff, 0xff],
-      &[],
-    ))?;
-    self.add_filament(&NewFilament::new(
-      "PolyLite",
-      "Polymaker",
-      [0x00, 0x00, 0x00],
-      &[],
-    ))?;
-    self.add_filament(&NewFilament::new(
-      "Candy Rainbow",
-      "ERYONE",
-      [0xec, 0x9b, 0xa4],
-      &[[0xbb, 0xe3, 0x3d]],
-    ))?;
-    self.add_filament(&NewFilament::new(
-      "Blue-Green-Orange",
-      "ERYONE",
-      [0x06, 0x9a, 0x2e],
-      &[[0x2a, 0x60, 0x99], [0xff, 0x80, 0x00]],
-    ))?;
+    // self.add_filament(&NewFilament::new(
+    //   "PolyLite",
+    //   "Polymaker",
+    //   [0xff, 0xff, 0xff],
+    //   &[],
+    // ))?;
+    // self.add_filament(&NewFilament::new(
+    //   "PolyLite",
+    //   "Polymaker",
+    //   [0x00, 0x00, 0x00],
+    //   &[],
+    // ))?;
+    // self.add_filament(&NewFilament::new(
+    //   "Candy Rainbow",
+    //   "ERYONE",
+    //   [0xec, 0x9b, 0xa4],
+    //   &[[0xbb, 0xe3, 0x3d]],
+    // ))?;
+    // self.add_filament(&NewFilament::new(
+    //   "Blue-Green-Orange",
+    //   "ERYONE",
+    //   [0x06, 0x9a, 0x2e],
+    //   &[[0x2a, 0x60, 0x99], [0xff, 0x80, 0x00]],
+    // ))?;
 
     Ok(())
   }
 }
 
 impl Db {
-  pub fn add_filament(&self, filament: &NewFilament) -> Result<()> {
+  pub fn delete_filament(&self, id: u32) -> Result<()> {
+    match self.db.execute(
+      "DELETE FROM filaments WHERE id = ?1",
+      [id],
+      //
+    ) {
+      Ok(_) => (),
+      Err(e) => eprintln!("e = {:?}", e),
+      // Err(e) => {}
+    }
+    Ok(())
+  }
+
+  pub fn add_filament(&self, filament: &NewFilament, id: Option<u32>) -> Result<()> {
     // fn get_col(c: [u8; 3]) -> String {
     //   format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2])
     // }
@@ -154,15 +167,44 @@ impl Db {
     // eprintln!("c1 = {:?}", c1);
     // eprintln!("c2 = {:?}", c2);
 
-    match self.db.execute(
-      "INSERT INTO filaments (name, manufacturer, color1, color2, color3, material, notes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)", 
-      (&filament.name, &filament.manufacturer, c1, c2, c3, &filament.material, &filament.notes)
-      // "INSERT INTO filaments (name, manufacturer, c1, c2, c3) VALUES (?1, ?2, ?3, ?4, ?5)", 
-      // (&filament.name, &filament.manufacturer, c1, c2, c3)
-    ) {
+    if let Some(id) = id {
+      eprintln!("updating filament");
+      match self.db.execute(
+        "INSERT OR REPLACE INTO filaments (id, name, manufacturer, color1, color2, color3, material, notes) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        (
+          id,
+          &filament.name,
+          &filament.manufacturer,
+          c1,
+          c2,
+          c3,
+          &filament.material,
+          &filament.notes,
+        ),
+      ) {
+        Ok(_) => (),
+        Err(e) => eprintln!("e = {:?}", e),
+        // Err(e) => {}
+      }
+    } else {
+      match self.db.execute(
+        "INSERT INTO filaments (name, manufacturer, color1, color2, color3, material, notes) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        (
+          &filament.name,
+          &filament.manufacturer,
+          c1,
+          c2,
+          c3,
+          &filament.material,
+          &filament.notes,
+        ),
+      ) {
         Ok(_) => (),
         // Err(e) => eprintln!("e = {:?}", e),
-        Err(e) => {},
+        Err(e) => {}
+      }
     }
 
     Ok(())

@@ -102,13 +102,21 @@ impl eframe::App for App {
       // ui.separator();
     });
 
-    egui::CentralPanel::default().show(ctx, |ui| match self.current_tab {
+    match self.current_tab {
       // Tab::GetPurgeValues => self.show_get_purge(ui),
-      Tab::EnterPurgeValues => self.show_enter_purge(ui),
-      Tab::NewFilament => self.show_new_filament(ui),
+      Tab::EnterPurgeValues => {
+        egui::CentralPanel::default().show(ctx, |ui| self.show_enter_purge(ui));
+        // self.show_enter_purge(ui)
+      }
+      Tab::NewFilament => {
+        // egui::CentralPanel::default().show(ctx, |ui| self.show_new_filament(ui));
+        self.show_new_filament(ctx);
+      }
       // Tab::EditFilament => self.show_edit_filament(ui),
-      Tab::FilamentGrid => self.show_filament_grid(ui),
-    });
+      Tab::FilamentGrid => {
+        egui::CentralPanel::default().show(ctx, |ui| self.show_filament_grid(ui));
+      }
+    }
 
     // egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
     //   ui.horizontal(|ui| {

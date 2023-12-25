@@ -1,11 +1,14 @@
+use egui::RichText;
+use egui_extras::{Column, TableBuilder};
 use hex_color::HexColor;
 
 use crate::types::Material;
 
-use super::{filament_picker::FilamentPicker, App};
+use super::{filament_picker::FilamentPicker, text_val::ValText, App};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct NewFilament {
+  row_id: Option<u32>,
   pub name: String,
   pub manufacturer: String,
   pub color_base: ([u8; 3], String),
@@ -14,11 +17,14 @@ pub struct NewFilament {
   // pub material: Option<Material>,
   pub notes: String,
   picker: FilamentPicker,
+  #[serde(skip)]
+  confirm_delete: Option<u32>,
 }
 
 impl Default for NewFilament {
   fn default() -> Self {
     Self {
+      row_id: None,
       name: String::new(),
       manufacturer: String::new(),
       color_base: ([0, 0, 0], "000000".to_string()),
@@ -26,6 +32,7 @@ impl Default for NewFilament {
       material: String::new(),
       notes: String::new(),
       picker: FilamentPicker::default(),
+      confirm_delete: None,
     }
   }
 }
@@ -86,7 +93,7 @@ fn color_edit_button(ui: &mut egui::Ui, c: &mut [u8; 3], s: &mut String) {
     let s2 = format!("#{}", s);
     if let Ok(col) = HexColor::parse(&s2) {
       *c = [col.r, col.g, col.b];
-      eprintln!("c = {:?}", c);
+      // eprintln!("c = {:?}", c);
     } else {
       eprintln!("can't parse?");
     }
@@ -94,31 +101,89 @@ fn color_edit_button(ui: &mut egui::Ui, c: &mut [u8; 3], s: &mut String) {
 }
 
 impl App {
-  pub fn show_new_filament(&mut self, ui: &mut egui::Ui) {
-    egui::Frame::none().show(ui, |ui| {
-      let filaments = self.db.get_all_filaments().unwrap();
+  // pub fn show_new_filament(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+  pub fn show_new_filament(&mut self, ctx: &egui::Context) {
+    let filaments = self.db.get_all_filaments().unwrap();
+
+    egui::panel::SidePanel::right("Filament Picker Panel").show(ctx, |ui| {
+      let mut table = TableBuilder::new(ui)
+        .striped(true)
+        .resizable(true)
+        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::auto())
+        .column(Column::initial(100.0).range(40.0..=300.0))
+        .column(Column::initial(100.0).at_least(40.0).clip(true))
+        .column(Column::remainder())
+        .min_scrolled_height(0.0);
+
+      table
+        .header(20.0, |mut header| {
+          header.col(|ui| {});
+        })
+        .body(|mut body| {
+          for f in filaments.iter() {
+            body.row(18., |mut row| {
+              row.col(|ui| {
+                ui.label(f.colored_name());
+              });
+            });
+          }
+        });
+    });
+
+    egui::CentralPanel::default().show(ctx, |ui| {
+      // egui::Frame::none().show(ui, |ui| {
       self.new_filament.picker.filament_picker(&filaments, ui);
 
-      if ui.button("Load Filament").clicked() {
+      ui.horizontal(|ui| {
+        if ui.button("Load Filament").clicked() {
+          if let Some(f) = &self.new_filament.picker.selected {
+            self.new_filament.row_id = Some(f.id);
+            self.new_filament.name = f.name.clone();
+            self.new_filament.manufacturer = f.manufacturer.clone();
+            self.new_filament.material = f.material.clone();
+            self.new_filament.notes = f.notes.clone();
+
+            self.new_filament.color_base = color_to_bytes(f.color_base);
+
+            self.new_filament.colors.clear();
+            for c in f.colors.iter() {
+              let c = color_to_bytes(*c);
+              self.new_filament.colors.push(c);
+            }
+          }
+        }
+        if ui.button("Load ID Only").clicked() {
+          if let Some(f) = &self.new_filament.picker.selected {
+            self.new_filament.row_id = Some(f.id);
+          }
+        }
+      });
+
+      let button = if self.new_filament.confirm_delete.is_some() {
+        let but = egui::Button::new(RichText::new("CONFIRM DELETE?").color(egui::Color32::RED));
+        ui.add(but)
+      } else {
+        ui.button("Delete Filament")
+      };
+
+      if self.new_filament.confirm_delete.is_some() && !button.hovered() {
+        self.new_filament.confirm_delete = None;
+      }
+      if button.clicked() {
         if let Some(f) = &self.new_filament.picker.selected {
-          self.new_filament.name = f.name.clone();
-          self.new_filament.manufacturer = f.manufacturer.clone();
-          self.new_filament.material = f.material.clone();
-          self.new_filament.notes = f.notes.clone();
-
-          self.new_filament.color_base = color_to_bytes(f.color_base);
-
-          self.new_filament.colors.clear();
-          for c in f.colors.iter() {
-            let c = color_to_bytes(*c);
-            self.new_filament.colors.push(c);
+          if let Some(id) = self.new_filament.confirm_delete {
+            if id == f.id {
+              self.db.delete_filament(id).unwrap();
+            }
+          } else {
+            self.new_filament.confirm_delete = Some(f.id);
           }
         }
       }
 
       ui.separator();
 
-      // ui.label("New filament");
       if ui.button("Clear").clicked() {
         self.new_filament.clear();
       }
@@ -128,6 +193,17 @@ impl App {
         .spacing([40.0, 4.0])
         .striped(false)
         .show(ui, |ui| {
+          ui.label("Row ID (blank for new filament): ");
+          egui::Frame::none().show(ui, |ui| {
+            if let Some(id) = self.new_filament.row_id {
+              ui.label(format!("{}", id));
+              if ui.button("clear id").clicked() {
+                self.new_filament.row_id = None;
+              }
+            }
+          });
+          ui.end_row();
+
           ui.label("Name: ");
           ui.add(egui::TextEdit::singleline(&mut self.new_filament.name));
           ui.end_row();
@@ -175,13 +251,25 @@ impl App {
           //
         });
 
-      if ui.add(egui::Button::new("Add New Filament")).clicked() {
+      let s = if let Some(id) = self.new_filament.row_id {
+        "Update Existing Filament"
+      } else {
+        "Add New Filament"
+      };
+
+      if ui.add(egui::Button::new(s)).clicked() {
         if self.new_filament.not_empty() {
-          self.db.add_filament(&self.new_filament).unwrap();
+          self
+            .db
+            .add_filament(&self.new_filament, self.new_filament.row_id)
+            .unwrap();
+          ui.label(format!("Added Filament: {}", &self.new_filament.name));
         } else {
           eprintln!("missing fields");
         }
       }
     });
   }
+
+  //
 }
