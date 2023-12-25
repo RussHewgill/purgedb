@@ -15,6 +15,55 @@ impl Default for Db {
 }
 
 impl Db {
+  pub fn get_filament(&self, id: u32) -> Result<Filament> {
+    self.db.query_row(
+      "SELECT 
+        id, 
+        name, 
+        manufacturer, 
+        color1, 
+        color2, 
+        color3, 
+        material, 
+        notes 
+      FROM filaments
+      WHERE id=?1
+      ",
+      [id],
+      |row| {
+        let id: u32 = row.get(0)?;
+        let name: String = row.get(1)?;
+        let manufacturer: String = row.get(2)?;
+        let color: i32 = row.get(3)?;
+        let color2: i32 = row.get(4)?;
+        let color3: i32 = row.get(5)?;
+        let material: String = row.get(6)?;
+        let notes: String = row.get(7)?;
+
+        let color = hex_color::HexColor::from_u24(color as u32);
+
+        let mut colors = vec![];
+
+        if color2 != -1 {
+          colors.push(hex_color::HexColor::from_u24(color2 as u32))
+        }
+        if color3 != -1 {
+          colors.push(hex_color::HexColor::from_u24(color3 as u32))
+        }
+
+        Ok(Filament::new(
+          id,
+          name,
+          manufacturer,
+          color,
+          &colors,
+          material,
+          notes,
+        ))
+      },
+    )
+  }
+
   pub fn get_all_filaments(&self) -> Result<Vec<Filament>> {
     let mut stmt = self.db.prepare(
       "SELECT 

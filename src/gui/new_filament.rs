@@ -16,7 +16,8 @@ pub struct NewFilament {
   pub material: String,
   // pub material: Option<Material>,
   pub notes: String,
-  picker: FilamentPicker,
+  // picker: FilamentPicker,
+  selected: Option<u32>,
   #[serde(skip)]
   confirm_delete: Option<u32>,
 }
@@ -31,7 +32,8 @@ impl Default for NewFilament {
       colors: vec![],
       material: String::new(),
       notes: String::new(),
-      picker: FilamentPicker::default(),
+      // picker: FilamentPicker::default(),
+      selected: None,
       confirm_delete: None,
     }
   }
@@ -72,9 +74,11 @@ impl NewFilament {
   }
 
   pub fn clear(&mut self) {
-    let p = self.picker.clone();
+    // let p = self.picker.clone();
+    let p = self.selected;
     *self = Self::default();
-    self.picker = p;
+    // self.picker = p;
+    self.selected = p;
   }
 
   pub fn not_empty(&self) -> bool {
@@ -105,82 +109,149 @@ impl App {
   pub fn show_new_filament(&mut self, ctx: &egui::Context) {
     let filaments = self.db.get_all_filaments().unwrap();
 
-    egui::panel::SidePanel::right("Filament Picker Panel").show(ctx, |ui| {
-      let mut table = TableBuilder::new(ui)
-        .striped(true)
-        .resizable(true)
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::auto())
-        .column(Column::initial(100.0).range(40.0..=300.0))
-        .column(Column::initial(100.0).at_least(40.0).clip(true))
-        .column(Column::remainder())
-        .min_scrolled_height(0.0);
+    egui::panel::SidePanel::right("Filament Picker Panel")
+      .min_width(400.)
+      .show(ctx, |ui| {
+        // let mut table = TableBuilder::new(ui)
+        //   .striped(true)
+        //   .resizable(true)
+        //   .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        //   .column(Column::auto())
+        //   .column(Column::initial(100.0).range(40.0..=300.0))
+        //   .column(Column::initial(100.0).at_least(40.0).clip(true))
+        //   .column(Column::remainder())
+        //   .min_scrolled_height(0.0);
 
-      table
-        .header(20.0, |mut header| {
-          header.col(|ui| {});
-        })
-        .body(|mut body| {
-          for f in filaments.iter() {
-            body.row(18., |mut row| {
-              row.col(|ui| {
-                ui.label(f.colored_name());
-              });
-            });
+        // table
+        //   .header(20.0, |mut header| {
+        //     header.col(|ui| {});
+        //   })
+        //   .body(|mut body| {
+        //     for (f_id, f) in filaments.iter().enumerate() {
+        //       body.row(18., |mut row| {
+        //         row.col(|ui| {
+        //           ui.label(f.colored_name());
+        //         });
+        //       });
+        //     }
+        //   });
+
+        egui::Frame::none().show(ui, |ui| {
+          ui.horizontal(|ui| {
+            if ui.button("Load Filament").clicked() {
+              if let Some(id) = &self.new_filament.selected {
+                if let Ok(f) = self.db.get_filament(*id) {
+                  self.new_filament.row_id = Some(f.id);
+                  self.new_filament.name = f.name.clone();
+                  self.new_filament.manufacturer = f.manufacturer.clone();
+                  self.new_filament.material = f.material.clone();
+                  self.new_filament.notes = f.notes.clone();
+
+                  self.new_filament.color_base = color_to_bytes(f.color_base);
+
+                  self.new_filament.colors.clear();
+                  for c in f.colors.iter() {
+                    let c = color_to_bytes(*c);
+                    self.new_filament.colors.push(c);
+                  }
+                }
+              }
+            }
+            if ui.button("Load ID Only").clicked() {
+              if let Some(id) = self.new_filament.selected {
+                if let Ok(f) = self.db.get_filament(id) {
+                  self.new_filament.row_id = Some(f.id);
+                }
+              }
+            }
+          });
+
+          let button = if self.new_filament.confirm_delete.is_some() {
+            let but = egui::Button::new(RichText::new("CONFIRM DELETE?").color(egui::Color32::RED));
+            ui.add(but)
+          } else {
+            ui.button("Delete Filament")
+          };
+
+          if self.new_filament.confirm_delete.is_some() && !button.hovered() {
+            self.new_filament.confirm_delete = None;
+          }
+          if button.clicked() {
+            if let Some(sel_id) = self.new_filament.selected {
+              if let Some(del_id) = self.new_filament.confirm_delete {
+                if del_id == sel_id {
+                  self.db.delete_filament(del_id).unwrap();
+                }
+              } else {
+                self.new_filament.confirm_delete = Some(sel_id);
+              }
+            }
           }
         });
-    });
+
+        ui.separator();
+
+        egui::Frame::none().show(ui, |ui| {
+          for (f_id, f) in filaments.iter().enumerate() {
+            ui.selectable_value(
+              &mut self.new_filament.selected,
+              Some(f.id),
+              f.colored_name(),
+            );
+          }
+        });
+      });
 
     egui::CentralPanel::default().show(ctx, |ui| {
       // egui::Frame::none().show(ui, |ui| {
-      self.new_filament.picker.filament_picker(&filaments, ui);
+      // self.new_filament.picker.filament_picker(&filaments, ui);
 
-      ui.horizontal(|ui| {
-        if ui.button("Load Filament").clicked() {
-          if let Some(f) = &self.new_filament.picker.selected {
-            self.new_filament.row_id = Some(f.id);
-            self.new_filament.name = f.name.clone();
-            self.new_filament.manufacturer = f.manufacturer.clone();
-            self.new_filament.material = f.material.clone();
-            self.new_filament.notes = f.notes.clone();
+      // ui.horizontal(|ui| {
+      //   if ui.button("Load Filament").clicked() {
+      //     if let Some(f) = &self.new_filament.picker.selected {
+      //       self.new_filament.row_id = Some(f.id);
+      //       self.new_filament.name = f.name.clone();
+      //       self.new_filament.manufacturer = f.manufacturer.clone();
+      //       self.new_filament.material = f.material.clone();
+      //       self.new_filament.notes = f.notes.clone();
 
-            self.new_filament.color_base = color_to_bytes(f.color_base);
+      //       self.new_filament.color_base = color_to_bytes(f.color_base);
 
-            self.new_filament.colors.clear();
-            for c in f.colors.iter() {
-              let c = color_to_bytes(*c);
-              self.new_filament.colors.push(c);
-            }
-          }
-        }
-        if ui.button("Load ID Only").clicked() {
-          if let Some(f) = &self.new_filament.picker.selected {
-            self.new_filament.row_id = Some(f.id);
-          }
-        }
-      });
+      //       self.new_filament.colors.clear();
+      //       for c in f.colors.iter() {
+      //         let c = color_to_bytes(*c);
+      //         self.new_filament.colors.push(c);
+      //       }
+      //     }
+      //   }
+      //   if ui.button("Load ID Only").clicked() {
+      //     if let Some(f) = &self.new_filament.picker.selected {
+      //       self.new_filament.row_id = Some(f.id);
+      //     }
+      //   }
+      // });
 
-      let button = if self.new_filament.confirm_delete.is_some() {
-        let but = egui::Button::new(RichText::new("CONFIRM DELETE?").color(egui::Color32::RED));
-        ui.add(but)
-      } else {
-        ui.button("Delete Filament")
-      };
+      // let button = if self.new_filament.confirm_delete.is_some() {
+      //   let but = egui::Button::new(RichText::new("CONFIRM DELETE?").color(egui::Color32::RED));
+      //   ui.add(but)
+      // } else {
+      //   ui.button("Delete Filament")
+      // };
 
-      if self.new_filament.confirm_delete.is_some() && !button.hovered() {
-        self.new_filament.confirm_delete = None;
-      }
-      if button.clicked() {
-        if let Some(f) = &self.new_filament.picker.selected {
-          if let Some(id) = self.new_filament.confirm_delete {
-            if id == f.id {
-              self.db.delete_filament(id).unwrap();
-            }
-          } else {
-            self.new_filament.confirm_delete = Some(f.id);
-          }
-        }
-      }
+      // if self.new_filament.confirm_delete.is_some() && !button.hovered() {
+      //   self.new_filament.confirm_delete = None;
+      // }
+      // if button.clicked() {
+      //   if let Some(f) = &self.new_filament.picker.selected {
+      //     if let Some(id) = self.new_filament.confirm_delete {
+      //       if id == f.id {
+      //         self.db.delete_filament(id).unwrap();
+      //       }
+      //     } else {
+      //       self.new_filament.confirm_delete = Some(f.id);
+      //     }
+      //   }
+      // }
 
       ui.separator();
 
