@@ -7,6 +7,8 @@ pub struct EnterPurge {
   // filament2: Filament,
   picker1: FilamentPicker,
   picker2: FilamentPicker,
+  prev1: Option<Filament>,
+  prev2: Option<Filament>,
   purge1: String,
   purge2: String,
 }
@@ -19,8 +21,30 @@ impl App {
       // .inner_margin(5.)
       .show(ui, |ui| {
         let filaments = self.db.get_all_filaments().unwrap();
-        self.enter_purge.picker1.filament_picker(&filaments, ui);
-        self.enter_purge.picker2.filament_picker(&filaments, ui);
+        let resp1 = self
+          .enter_purge
+          .picker1
+          .filament_picker(None, &filaments, ui);
+        let resp2 = self
+          .enter_purge
+          .picker2
+          .filament_picker(None, &filaments, ui);
+
+        if self.enter_purge.picker1.selected != self.enter_purge.prev1 {
+          self.enter_purge.prev1 = self.enter_purge.picker1.selected.clone();
+          self.enter_purge.purge1.clear();
+          self.enter_purge.purge2.clear();
+        }
+        if self.enter_purge.picker2.selected != self.enter_purge.prev2 {
+          self.enter_purge.prev2 = self.enter_purge.picker2.selected.clone();
+          self.enter_purge.purge1.clear();
+          self.enter_purge.purge2.clear();
+        }
+
+        // if resp1.changed() || resp2.changed() {
+        //   self.enter_purge.purge1.clear();
+        //   self.enter_purge.purge2.clear();
+        // }
 
         ui.separator();
 
@@ -37,13 +61,17 @@ impl App {
               ui.label(f1.colored_name());
               ui.label("To ");
               ui.label(f2.colored_name());
-              let resp = ui.text_edit_singleline(&mut self.enter_purge.purge1);
               match self.db.get_purge_values(f1.id, f2.id) {
                 Ok(v) => {
-                  ui.label(format!("Existing Value: {}", v));
+                  ui.visuals_mut().override_text_color = Some(egui::Color32::BLACK);
+                  // ui.label(format!("Existing Value: {}", v));
+                  ui.label(format!("({})", v));
                 }
                 _ => {}
               }
+              // let edit = egui::TextEdit::singleline(&mut self.enter_purge.purge1).clip_text(true);
+              // let resp = ui.add(edit);
+              let resp = ui.text_edit_singleline(&mut self.enter_purge.purge1);
             });
 
             ui.horizontal(|ui| {
@@ -51,25 +79,23 @@ impl App {
               ui.label(f2.colored_name());
               ui.label("To ");
               ui.label(f1.colored_name());
-              let resp = ui.text_edit_singleline(&mut self.enter_purge.purge2);
               match self.db.get_purge_values(f2.id, f1.id) {
                 Ok(v) => {
-                  ui.label(format!("Existing Value: {}", v));
+                  ui.visuals_mut().override_text_color = Some(egui::Color32::BLACK);
+                  // ui.label(format!("Existing Value: {}", v));
+                  ui.label(format!("({})", v));
                 }
                 _ => {}
               }
+              let resp = ui.text_edit_singleline(&mut self.enter_purge.purge2);
             });
 
             if ui.button("Save Vaules").clicked() {
-              match (
-                self.enter_purge.purge1.parse::<u32>(),
-                self.enter_purge.purge2.parse::<u32>(),
-              ) {
-                (Ok(purge1), Ok(purge2)) => {
-                  self.db.set_purge_values(f1.id, f2.id, purge1).unwrap();
-                  self.db.set_purge_values(f2.id, f1.id, purge2).unwrap();
-                }
-                _ => {}
+              if let Ok(p) = self.enter_purge.purge1.parse::<u32>() {
+                self.db.set_purge_values(f1.id, f2.id, p).unwrap();
+              }
+              if let Ok(p) = self.enter_purge.purge2.parse::<u32>() {
+                self.db.set_purge_values(f2.id, f1.id, p).unwrap();
               }
             }
           }

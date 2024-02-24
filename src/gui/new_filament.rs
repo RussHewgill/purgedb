@@ -191,7 +191,8 @@ impl App {
 
         ui.separator();
 
-        egui::Frame::none().show(ui, |ui| {
+        egui::ScrollArea::vertical().show(ui, |ui| {
+          // egui::Frame::none().show(ui, |ui| {
           for (f_id, f) in filaments.iter().enumerate() {
             ui.selectable_value(
               &mut self.new_filament.selected,
@@ -199,6 +200,8 @@ impl App {
               f.colored_name(),
             );
           }
+          // });
+          ui.allocate_space(ui.available_size());
         });
       });
 

@@ -6,21 +6,21 @@ use super::{filament_picker::FilamentPicker, text_val::ValText, App};
 pub struct FilamentGrid {
   pickers: [FilamentPicker; 16],
   num_filaments: usize,
-  cells: [[ValText<u32>; 16]; 16],
+  // cells: [[ValText<u32>; 16]; 16],
 }
 
 impl Default for FilamentGrid {
   fn default() -> Self {
-    let cells = std::array::from_fn(|_| {
-      std::array::from_fn(|_| {
-        ValText::with_validator(|text| text.parse::<u32>().ok().filter(|&n| n < 1000))
-      })
-    });
+    // let cells = std::array::from_fn(|_| {
+    //   std::array::from_fn(|_| {
+    //     ValText::with_validator(|text| text.parse::<u32>().ok().filter(|&n| n < 1000))
+    //   })
+    // });
 
     Self {
       pickers: Default::default(),
       num_filaments: 4,
-      cells,
+      // cells,
     }
   }
 }
@@ -34,6 +34,19 @@ impl App {
       .inner_margin(5.)
       .show(ui, |ui| {
         ui.visuals_mut().override_text_color = Some(egui::Color32::BLACK);
+        ui.horizontal(|ui| {
+          if ui.button("Clear").clicked() {
+            for p in self.filament_grid.pickers.iter_mut() {
+              p.reset();
+            }
+          }
+          if ui.button("White + Black").clicked() {
+            let f = self.db.get_filament(2).unwrap();
+            self.filament_grid.pickers[1].selected = Some(f);
+            let f = self.db.get_filament(1).unwrap();
+            self.filament_grid.pickers[2].selected = Some(f);
+          }
+        });
 
         ui.horizontal(|ui| {
           if ui.button("+").clicked() {
@@ -64,6 +77,8 @@ impl App {
                 header.col(|ui| {
                   ui.label(f.colored_box(true));
                 });
+              } else {
+                header.col(|ui| {});
               }
             }
           })
@@ -71,7 +86,7 @@ impl App {
             for from_id in 0..self.filament_grid.num_filaments {
               body.row(20., |mut row| {
                 row.col(|ui| {
-                  self.filament_grid.pickers[from_id].filament_picker(&filaments, ui);
+                  self.filament_grid.pickers[from_id].filament_picker(Some(400.), &filaments, ui);
                 });
 
                 for (to_id, to) in self.filament_grid.pickers[..self.filament_grid.num_filaments]
@@ -133,7 +148,7 @@ impl App {
     // }
 
     crate::input_sender::alt_tab()?;
-    std::thread::sleep(std::time::Duration::from_millis(300));
+    std::thread::sleep(std::time::Duration::from_millis(400));
     // eprintln!("alt-tab");
 
     for from_id in 0..num_filaments {
@@ -148,10 +163,15 @@ impl App {
           continue;
         }
         if let Ok(purge) = self.db.get_purge_values(from.id, to.id) {
-          eprintln!("sending purge = {:?}", purge);
-          // eprintln!("tab");
+          // eprintln!("sending purge = {:?}", purge);
           crate::input_sender::send_number(purge, true)?;
+        } else {
+          crate::input_sender::send_number(999, true)?;
         }
+      }
+      for _ in 0..4 - num_filaments {
+        // eprintln!("tab");
+        crate::input_sender::tab()?;
       }
       // eprintln!("tab");
       crate::input_sender::tab()?;

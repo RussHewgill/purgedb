@@ -10,7 +10,7 @@ pub const KEY_FLAGS_DOWN: KEYBD_EVENT_FLAGS = KEYBD_EVENT_FLAGS(0);
 pub const KEY_FLAGS_UP: KEYBD_EVENT_FLAGS = KEYBD_EVENT_FLAGS(0x0002);
 
 // const DELAY: u64 = 30;
-const DELAY: u64 = 10;
+const DELAY: u64 = 3;
 
 pub fn main() -> Result<()> {
   // let key = 0x41; // a

@@ -91,12 +91,12 @@ impl eframe::App for App {
         //   Tab::GetPurgeValues,
         //   "Get Purge Values",
         // );
+        ui.selectable_value(&mut self.current_tab, Tab::NewFilament, "New Filament");
         ui.selectable_value(
           &mut self.current_tab,
           Tab::EnterPurgeValues,
           "Enter Purge Values",
         );
-        ui.selectable_value(&mut self.current_tab, Tab::NewFilament, "New Filament");
         ui.selectable_value(&mut self.current_tab, Tab::FilamentGrid, "Filament Grid");
       });
       // ui.separator();
