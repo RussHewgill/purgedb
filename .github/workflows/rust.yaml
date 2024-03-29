@@ -1,0 +1,68 @@
+name: Rust project CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        platform:
+          - os_name: Linux-x86_64
+            os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            bin: purgedb
+            name: purgedb-Linux-x86_64-gnu.tar.gz
+            command: build
+
+          - os_name: macOS-x86_64
+            os: macOS-latest
+            target: x86_64-apple-darwin
+            bin: purgedb
+            name: purgedb-Darwin-x86_64.tar.gz
+            command: build
+
+          - os_name: Windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: purgedb.exe
+            name: purgedb-Windows-x86_64.zip
+            command: build
+
+
+    runs-on:  ${{ matrix.platform.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - run: rustup toolchain install stable --profile minimal
+    - name: Cache cargo & target directories
+      uses: Swatinem/rust-cache@v2
+    - name: Install eframe deps on Linux
+      run: sudo apt-get update --yes && sudo apt-get install --yes libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+      if: contains(matrix.platform.name, 'Linux')
+    - name: Build
+      uses: houseabsolute/actions-rust-cross@v0.0.12
+      with:
+        command: ${{ matrix.platform.command }}
+        target: ${{ matrix.platform.target }}
+        args: "--locked --release"
+        strip: true
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: purgedb-${{ matrix.platform.os_name }}-${{ matrix.platform.bin }}
+        path: ./target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          ./target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+

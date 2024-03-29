@@ -3,6 +3,7 @@
 #![allow(unused_mut)]
 #![allow(dead_code)]
 #![allow(unused_doc_comments)]
+#![windows_subsystem = "windows"]
 
 mod db;
 mod gui;
