@@ -1,23 +1,31 @@
+use std::collections::HashMap;
+
 use egui_extras::{Column, TableBuilder};
+
+use crate::types::Filament;
 
 use super::{filament_picker::FilamentPicker, text_val::ValText, App};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct FilamentGrid {
-    current: usize,
-    grids: Vec<FilamentGridData>,
+    // current: usize,
+    current: FilamentGridData,
+    // grids: Vec<FilamentGridData>,
+    // #[serde(skip)]
+    grids: [Option<FilamentGridSave>; 4],
 }
 
 impl Default for FilamentGrid {
     fn default() -> Self {
         Self {
-            current: 0,
-            grids: vec![Default::default()],
+            // current: 0,
+            current: FilamentGridData::default(),
+            grids: std::array::from_fn(|_| None),
         }
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FilamentGridData {
     pickers: [FilamentPicker; 16],
     num_filaments: usize,
@@ -26,6 +34,49 @@ pub struct FilamentGridData {
     pub use_multiplier: bool,
     pub offset: u32,
     pub use_offset: bool,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct FilamentGridSave {
+    // pickers: [(Option<Filament>, String); 16],
+    pickers: [Option<u32>; 16],
+    num_filaments: usize,
+    pub multiplier: f32,
+    pub use_multiplier: bool,
+    pub offset: u32,
+    pub use_offset: bool,
+}
+
+impl FilamentGridSave {
+    pub fn from_grid(grid: &FilamentGridData) -> Self {
+        let pickers = std::array::from_fn(|i| grid.pickers[i].to_saved());
+        Self {
+            pickers,
+            num_filaments: grid.num_filaments,
+            multiplier: grid.multiplier,
+            use_multiplier: grid.use_multiplier,
+            offset: grid.offset,
+            use_offset: grid.use_offset,
+        }
+    }
+
+    pub fn to_grid(&self, filaments: &HashMap<u32, Filament>, grid: &mut FilamentGridData) {
+        for i in 0..16 {
+            if let Some(id) = self.pickers[i] {
+                let f = filaments.get(&id).unwrap();
+                grid.pickers[i].set_selected(Some(f.clone()));
+            } else {
+                grid.pickers[i].reset();
+            }
+            // grid.pickers[i].set_selected(self.pickers[i].0.clone());
+            // grid.pickers[i].set_buf(self.pickers[i].1.clone());
+        }
+        grid.num_filaments = self.num_filaments;
+        grid.multiplier = self.multiplier;
+        grid.use_multiplier = self.use_multiplier;
+        grid.offset = self.offset;
+        grid.use_offset = self.use_offset;
+    }
 }
 
 impl Default for FilamentGridData {
@@ -49,52 +100,75 @@ impl Default for FilamentGridData {
 }
 
 impl FilamentGrid {
+    pub fn save_picker(&mut self, index: usize) {
+        // self.grids[index] = Some(self.current.clone());
+        self.grids[index] = Some(FilamentGridSave::from_grid(&self.current));
+    }
+
+    pub fn load_picker(&mut self, filaments: &HashMap<u32, Filament>, index: usize) {
+        if let Some(data) = &self.grids[index] {
+            data.to_grid(filaments, &mut self.current);
+        }
+    }
+
     pub fn pickers(&self) -> &[FilamentPicker] {
-        &self.grids[self.current].pickers
+        // &self.grids[self.current].pickers
+        &self.current.pickers
     }
 
     pub fn pickers_mut(&mut self) -> &mut [FilamentPicker] {
-        &mut self.grids[self.current].pickers
+        // &mut self.grids[self.current].pickers
+        &mut self.current.pickers
     }
 
     pub fn num_filaments(&self) -> usize {
-        self.grids[self.current].num_filaments
+        // self.grids[self.current].num_filaments
+        self.current.num_filaments
     }
 
     pub fn num_filaments_mut(&mut self) -> &mut usize {
-        &mut self.grids[self.current].num_filaments
+        // &mut self.grids[self.current].num_filaments
+        &mut self.current.num_filaments
     }
 
     pub fn offset(&self) -> u32 {
-        self.grids[self.current].offset
+        // self.grids[self.current].offset
+        self.current.offset
     }
 
     pub fn offset_mut(&mut self) -> &mut u32 {
-        &mut self.grids[self.current].offset
+        // &mut self.grids[self.current].offset
+        &mut self.current.offset
     }
 
     pub fn use_offset(&self) -> bool {
-        self.grids[self.current].use_offset
+        // self.grids[self.current].use_offset
+        self.current.use_offset
     }
 
     pub fn use_offset_mut(&mut self) -> &mut bool {
-        &mut self.grids[self.current].use_offset
+        // &mut self.grids[self.current].use_offset
+        &mut self.current.use_offset
     }
 
     pub fn multiplier(&self) -> f32 {
-        self.grids[self.current].multiplier
+        // self.grids[self.current].multiplier
+        self.current.multiplier
     }
 
     pub fn multiplier_mut(&mut self) -> &mut f32 {
-        &mut self.grids[self.current].multiplier
+        // &mut self.grids[self.current].multiplier
+        &mut self.current.multiplier
     }
 
     pub fn use_multiplier(&self) -> bool {
-        self.grids[self.current].use_multiplier
+        // self.grids[self.current].use_multiplier
+        self.current.use_multiplier
     }
 
     pub fn use_multiplier_mut(&mut self) -> &mut bool {
-        &mut self.grids[self.current].use_multiplier
+        // &mut self.grids[self.current].use_multiplier
+        &mut self.current.use_multiplier
     }
 }
 
@@ -167,7 +241,8 @@ impl App {
                                 row.col(|ui| {
                                     self.filament_grid.pickers_mut()[from_id].filament_picker(
                                         Some(400.),
-                                        &filaments,
+                                        &filaments.0,
+                                        &filaments.1,
                                         ui,
                                     );
                                 });
@@ -258,7 +333,38 @@ impl App {
                     ui.add(drag);
                 });
 
-                // ui.separator();
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    'outer: for i in 0..self.filament_grid.grids.len() {
+                        let b = ui.vertical(|ui| {
+                            let mut b = false;
+                            if ui.button(format!("Save {}", i)).clicked() {
+                                self.filament_grid.save_picker(i);
+                            }
+                            if self.filament_grid.grids[i].is_some() {
+                                if ui.button(format!("Load {}", i)).clicked() {
+                                    self.filament_grid.load_picker(&filaments.0, i);
+                                    // break 'outer;
+                                    b = true;
+                                }
+                            }
+                            if let Some(data) = &self.filament_grid.grids[i] {
+                                for k in 0..data.num_filaments {
+                                    if let Some(f) = data.pickers[k] {
+                                        if let Some(f) = filaments.0.get(&f) {
+                                            ui.label(f.colored_box(false));
+                                        }
+                                    }
+                                }
+                            }
+                            b
+                        });
+                        if b.inner {
+                            break 'outer;
+                        }
+                    }
+                });
 
                 // /// saved grids
                 // ui.horizontal(|ui| {

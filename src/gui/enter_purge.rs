@@ -45,14 +45,18 @@ impl App {
                         );
                     }
                     ui.vertical(|ui| {
-                        let resp1 = self
-                            .enter_purge
-                            .picker1
-                            .filament_picker(None, &filaments, ui);
-                        let resp2 = self
-                            .enter_purge
-                            .picker2
-                            .filament_picker(None, &filaments, ui);
+                        let resp1 = self.enter_purge.picker1.filament_picker(
+                            None,
+                            &filaments.0,
+                            &filaments.1,
+                            ui,
+                        );
+                        let resp2 = self.enter_purge.picker2.filament_picker(
+                            None,
+                            &filaments.0,
+                            &filaments.1,
+                            ui,
+                        );
                     });
                 });
 

@@ -1,152 +1,158 @@
 use egui::{
-  text::{LayoutJob, TextWrapping},
-  RichText,
+    text::{LayoutJob, TextWrapping},
+    RichText,
 };
 use hex_color::HexColor;
 
 #[derive(Debug, Default, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Filament {
-  pub id: u32,
-  pub name: String,
-  pub manufacturer: String,
-  // pub color: (u8, u8, u8),
-  pub color_base: HexColor,
-  // pub material: Material,
-  pub colors: Vec<HexColor>,
-  pub material: String,
-  pub notes: String,
+    pub id: u32,
+    pub name: String,
+    pub manufacturer: String,
+    // pub color: (u8, u8, u8),
+    pub color_base: HexColor,
+    // pub material: Material,
+    pub colors: Vec<HexColor>,
+    pub material: String,
+    pub notes: String,
 }
 
 impl Filament {
-  pub fn new(
-    id: u32,
-    name: String,
-    manufacturer: String,
-    color_base: HexColor,
-    colors: &[HexColor],
-    material: String,
-    notes: String,
-  ) -> Self {
-    Self {
-      id,
-      name,
-      manufacturer,
-      color_base,
-      colors: colors.to_vec(),
-      material,
-      notes,
-    }
-  }
-
-  pub fn colored_box(&self, vert: bool) -> LayoutJob {
-    // RichText::new("\u{2B1B}").color(
-    //   egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b)
-    // )
-
-    let text = if vert { "\u{2B1B}\n" } else { "\u{2B1B}" };
-
-    let mut job = LayoutJob::default();
-
-    // job.wrap.max_width = 1.;
-    // job.wrap.break_anywhere = true;
-
-    if let Some(c) = self.colors.get(1) {
-      job.append(
-        text,
-        0.0,
-        egui::TextFormat {
-          color: egui::Color32::from_rgb(c.r, c.g, c.b),
-          ..Default::default()
-        },
-      );
-    } else {
-      job.append(
-        text,
-        0.0,
-        egui::TextFormat {
-          color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 0),
-          ..Default::default()
-        },
-      );
+    pub fn new(
+        id: u32,
+        name: String,
+        manufacturer: String,
+        color_base: HexColor,
+        colors: &[HexColor],
+        material: String,
+        notes: String,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            manufacturer,
+            color_base,
+            colors: colors.to_vec(),
+            material,
+            notes,
+        }
     }
 
-    if let Some(c) = self.colors.get(0) {
-      job.append(
-        text,
-        0.0,
-        egui::TextFormat {
-          color: egui::Color32::from_rgb(c.r, c.g, c.b),
-          ..Default::default()
-        },
-      );
-    } else {
-      job.append(
-        text,
-        0.0,
-        egui::TextFormat {
-          color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 0),
-          ..Default::default()
-        },
-      );
+    pub fn colored_box(&self, vert: bool) -> LayoutJob {
+        // RichText::new("\u{2B1B}").color(
+        //   egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b)
+        // )
+
+        let text = if vert { "\u{2B1B}\n" } else { "\u{2B1B}" };
+
+        let mut job = LayoutJob::default();
+
+        // job.wrap.max_width = 1.;
+        // job.wrap.break_anywhere = true;
+
+        if let Some(c) = self.colors.get(1) {
+            job.append(
+                text,
+                0.0,
+                egui::TextFormat {
+                    color: egui::Color32::from_rgb(c.r, c.g, c.b),
+                    ..Default::default()
+                },
+            );
+        } else {
+            job.append(
+                text,
+                0.0,
+                egui::TextFormat {
+                    color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 0),
+                    ..Default::default()
+                },
+            );
+        }
+
+        if let Some(c) = self.colors.get(0) {
+            job.append(
+                text,
+                0.0,
+                egui::TextFormat {
+                    color: egui::Color32::from_rgb(c.r, c.g, c.b),
+                    ..Default::default()
+                },
+            );
+        } else {
+            job.append(
+                text,
+                0.0,
+                egui::TextFormat {
+                    color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 0),
+                    ..Default::default()
+                },
+            );
+        }
+
+        job.append(
+            text,
+            0.0,
+            egui::TextFormat {
+                color: egui::Color32::from_rgb(
+                    self.color_base.r,
+                    self.color_base.g,
+                    self.color_base.b,
+                ),
+                ..Default::default()
+            },
+        );
+
+        job
     }
 
-    job.append(
-      text,
-      0.0,
-      egui::TextFormat {
-        color: egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b),
-        ..Default::default()
-      },
-    );
+    pub fn colored_name(&self) -> LayoutJob {
+        // let mut job = LayoutJob::default();
+        let mut job = self.colored_box(false);
 
-    job
-  }
+        job.append(
+            &format!("{} {}", &self.manufacturer, &self.name),
+            // &self.name,
+            2.0,
+            egui::TextFormat {
+                // font_id: FontId::new(14.0, FontFamily::Proportional),
+                color: egui::Color32::BLACK,
+                ..Default::default()
+            },
+        );
 
-  pub fn colored_name(&self) -> LayoutJob {
-    // let mut job = LayoutJob::default();
-    let mut job = self.colored_box(false);
+        job
+    }
 
-    job.append(
-      &format!("{} {}", &self.manufacturer, &self.name),
-      // &self.name,
-      2.0,
-      egui::TextFormat {
-        // font_id: FontId::new(14.0, FontFamily::Proportional),
-        color: egui::Color32::BLACK,
-        ..Default::default()
-      },
-    );
+    #[cfg(feature = "nope")]
+    pub fn display(&self) -> String {
+        let Self {
+            name,
+            manufacturer,
+            color_base: color,
+            ..
+        } = self;
+        let color = self.display_color();
+        // format!("{manufacturer} {name} {color} ({material})")
+        // format!("{manufacturer} {name} {color}")
+        format!("{manufacturer} {name}")
+    }
 
-    job
-  }
-
-  pub fn display(&self) -> String {
-    let Self {
-      name,
-      manufacturer,
-      color_base: color,
-      ..
-    } = self;
-    let color = self.display_color();
-    // format!("{manufacturer} {name} {color} ({material})")
-    // format!("{manufacturer} {name} {color}")
-    format!("{manufacturer} {name}")
-  }
-
-  pub fn display_color(&self) -> String {
-    format!(
-      "#{:02X}{:02X}{:02X}",
-      self.color_base.r, self.color_base.g, self.color_base.b
-    )
-  }
+    #[cfg(feature = "nope")]
+    pub fn display_color(&self) -> String {
+        format!(
+            "#{:02X}{:02X}{:02X}",
+            self.color_base.r, self.color_base.g, self.color_base.b
+        )
+    }
 }
 
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Material {
-  PLA,
-  PETG,
-  ABS,
-  ASA,
+    PLA,
+    PETG,
+    ABS,
+    ASA,
 }
 
 // bitflags::bitflags! {

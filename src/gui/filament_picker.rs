@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use egui::{text::LayoutJob, Color32, FontFamily, FontId, Response, TextFormat};
 
 use crate::types::Filament;
@@ -22,6 +24,14 @@ impl Default for FilamentPicker {
 }
 
 impl FilamentPicker {
+    // pub fn to_saved(&self) -> (Option<Filament>, String) {
+    //     (self.selected.clone(), self.buf.clone())
+    // }
+    pub fn to_saved(&self) -> Option<u32> {
+        // (self.selected.clone(), self.buf.clone())
+        self.selected.as_ref().map(|f| f.id)
+    }
+
     pub fn selected(&self) -> Option<&Filament> {
         self.selected.as_ref()
     }
@@ -37,6 +47,10 @@ impl FilamentPicker {
         };
     }
 
+    pub fn set_buf(&mut self, buf: String) {
+        self.buf = buf;
+    }
+
     pub fn reset(&mut self) {
         self.selected = None;
         self.buf.clear();
@@ -45,6 +59,7 @@ impl FilamentPicker {
     pub fn filament_picker(
         &mut self,
         min_width: Option<f32>,
+        filaments_map: &HashMap<u32, Filament>,
         filaments: &[Filament],
         ui: &mut egui::Ui,
     ) -> Response {
@@ -82,6 +97,7 @@ impl FilamentPicker {
 
             // let response = egui::ComboBox::from_label("Select Filament")
             let mut response = egui::ComboBox::from_id_source(self.id)
+                // let mut response = super::dropdown::DropDownBox::from_id_source(self.id)
                 .width(if let Some(min_width) = min_width {
                     min_width
                 } else {
@@ -94,7 +110,7 @@ impl FilamentPicker {
                 })
                 .show_ui(ui, |ui| {
                     // eprintln!("ui.available_width() = {}", ui.available_width());
-                    for f in filaments.iter() {
+                    for (_, f) in filaments.iter().enumerate() {
                         // let w = format!("{} {}", &f.name, &f.display_color());
                         ui.selectable_value(&mut self.selected, Some(f.clone()), f.colored_name());
                     }
