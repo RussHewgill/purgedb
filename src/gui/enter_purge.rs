@@ -20,15 +20,39 @@ impl App {
             // .outer_margin(5.)
             // .inner_margin(5.)
             .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    if ui.button("Black").clicked() {
+                        let f = self.db.get_filament(2).unwrap();
+                        self.enter_purge.picker1.selected = Some(f);
+                    }
+                    if ui.button("White").clicked() {
+                        let f = self.db.get_filament(1).unwrap();
+                        self.enter_purge.picker1.selected = Some(f);
+                    }
+                });
+
+                ui.separator();
+
                 let filaments = self.db.get_all_filaments().unwrap();
-                let resp1 = self
-                    .enter_purge
-                    .picker1
-                    .filament_picker(None, &filaments, ui);
-                let resp2 = self
-                    .enter_purge
-                    .picker2
-                    .filament_picker(None, &filaments, ui);
+
+                ui.horizontal(|ui| {
+                    if ui.button("Swap").clicked() {
+                        std::mem::swap(
+                            &mut self.enter_purge.picker1,
+                            &mut self.enter_purge.picker2,
+                        );
+                    }
+                    ui.vertical(|ui| {
+                        let resp1 = self
+                            .enter_purge
+                            .picker1
+                            .filament_picker(None, &filaments, ui);
+                        let resp2 = self
+                            .enter_purge
+                            .picker2
+                            .filament_picker(None, &filaments, ui);
+                    });
+                });
 
                 if self.enter_purge.picker1.selected != self.enter_purge.prev1 {
                     self.enter_purge.prev1 = self.enter_purge.picker1.selected.clone();

@@ -135,6 +135,8 @@ impl App {
                     }
                 });
 
+                ui.separator();
+
                 let mut any_changed = false;
 
                 TableBuilder::new(ui)
@@ -237,6 +239,8 @@ impl App {
                 }
 
                 ui.separator();
+
+                /// multiplier and offset
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.filament_grid.use_multiplier(), "Use multiplier");
                     let drag = egui::DragValue::new(self.filament_grid.multiplier_mut())
@@ -251,6 +255,15 @@ impl App {
                         .max_decimals(0);
                     ui.add(drag);
                 });
+
+                // ui.separator();
+
+                // /// saved grids
+                // ui.horizontal(|ui| {
+                //     /// 0, 1: rolling save for each send
+                // });
+
+                //
             });
     }
 
