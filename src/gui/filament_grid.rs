@@ -358,6 +358,11 @@ impl App {
                                     }
                                 }
                             }
+                            if self.filament_grid.grids[i].is_some() {
+                                if ui.button(format!("Delete {}", i)).clicked() {
+                                    self.filament_grid.grids[i] = None;
+                                }
+                            }
                             b
                         });
                         if b.inner {
