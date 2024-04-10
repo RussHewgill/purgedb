@@ -95,28 +95,28 @@ impl App {
                         if ui.button("Save Vaules").clicked() {
                             if let Ok(p) = self.enter_purge.purge1.parse::<u32>() {
                                 let p = match (
-                                    self.filament_grid.use_multiplier,
-                                    self.filament_grid.use_offset,
+                                    self.filament_grid.use_multiplier(),
+                                    self.filament_grid.use_offset(),
                                 ) {
                                     (true, true) => p,
                                     (true, false) => {
-                                        (p as f32 * self.filament_grid.multiplier) as u32
+                                        (p as f32 * self.filament_grid.multiplier()) as u32
                                     }
-                                    (false, true) => p + self.filament_grid.offset,
+                                    (false, true) => p - self.filament_grid.offset(),
                                     (false, false) => p,
                                 };
                                 self.db.set_purge_values(f1.id, f2.id, p).unwrap();
                             }
                             if let Ok(p) = self.enter_purge.purge2.parse::<u32>() {
                                 let p = match (
-                                    self.filament_grid.use_multiplier,
-                                    self.filament_grid.use_offset,
+                                    self.filament_grid.use_multiplier(),
+                                    self.filament_grid.use_offset(),
                                 ) {
                                     (true, true) => p,
                                     (true, false) => {
-                                        (p as f32 * self.filament_grid.multiplier) as u32
+                                        (p as f32 * self.filament_grid.multiplier()) as u32
                                     }
-                                    (false, true) => p + self.filament_grid.offset,
+                                    (false, true) => p - self.filament_grid.offset(),
                                     (false, false) => p,
                                 };
                                 self.db.set_purge_values(f2.id, f1.id, p).unwrap();
@@ -128,15 +128,15 @@ impl App {
 
                 ui.separator();
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.filament_grid.use_multiplier, "Use multiplier");
-                    let drag = egui::DragValue::new(&mut self.filament_grid.multiplier)
+                    ui.checkbox(self.filament_grid.use_multiplier_mut(), "Use multiplier");
+                    let drag = egui::DragValue::new(self.filament_grid.multiplier_mut())
                         .update_while_editing(false)
                         .max_decimals(3);
                     ui.add(drag);
                 });
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.filament_grid.use_offset, "Use offset");
-                    let drag = egui::DragValue::new(&mut self.filament_grid.offset)
+                    ui.checkbox(self.filament_grid.use_offset_mut(), "Use offset");
+                    let drag = egui::DragValue::new(self.filament_grid.offset_mut())
                         .update_while_editing(false)
                         .max_decimals(0);
                     ui.add(drag);
