@@ -115,9 +115,11 @@ impl App {
                     }
                     if ui.button("White + Black").clicked() {
                         let f = self.db.get_filament(2).unwrap();
-                        self.filament_grid.pickers_mut()[1].selected = Some(f);
+                        // *self.filament_grid.pickers_mut()[1].selected_mut() = Some(f);
+                        self.filament_grid.pickers_mut()[1].set_selected(Some(f));
                         let f = self.db.get_filament(1).unwrap();
-                        self.filament_grid.pickers_mut()[2].selected = Some(f);
+                        // *self.filament_grid.pickers_mut()[2].selected_mut() = Some(f);
+                        self.filament_grid.pickers_mut()[2].set_selected(Some(f));
                     }
                 });
 
@@ -150,7 +152,7 @@ impl App {
                         for f in self.filament_grid.pickers()[..self.filament_grid.num_filaments()]
                             .iter()
                         {
-                            if let Some(f) = &f.selected {
+                            if let Some(f) = &f.selected() {
                                 header.col(|ui| {
                                     ui.label(f.colored_box(true));
                                 });
@@ -185,8 +187,8 @@ impl App {
                                         }
 
                                         match (
-                                            &self.filament_grid.pickers()[from_id].selected,
-                                            &self.filament_grid.pickers()[to_id].selected,
+                                            self.filament_grid.pickers()[from_id].selected(),
+                                            self.filament_grid.pickers()[to_id].selected(),
                                         ) {
                                             (Some(from), Some(to)) => {
                                                 if let Ok(purge) =
@@ -242,14 +244,14 @@ impl App {
 
                 /// multiplier and offset
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.filament_grid.use_multiplier(), "Use multiplier");
+                    ui.checkbox(self.filament_grid.use_multiplier_mut(), "Use multiplier");
                     let drag = egui::DragValue::new(self.filament_grid.multiplier_mut())
                         .update_while_editing(false)
                         .max_decimals(3);
                     ui.add(drag);
                 });
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.filament_grid.use_offset(), "Use offset");
+                    ui.checkbox(self.filament_grid.use_offset_mut(), "Use offset");
                     let drag = egui::DragValue::new(self.filament_grid.offset_mut())
                         .update_while_editing(false)
                         .max_decimals(0);
@@ -277,11 +279,11 @@ impl App {
         // eprintln!("alt-tab");
 
         for from_id in 0..num_filaments {
-            let Some(from) = &self.filament_grid.pickers()[from_id].selected else {
+            let Some(from) = &self.filament_grid.pickers()[from_id].selected() else {
                 panic!("missing from");
             };
             for to_id in 0..num_filaments {
-                let Some(to) = &self.filament_grid.pickers()[to_id].selected else {
+                let Some(to) = &self.filament_grid.pickers()[to_id].selected() else {
                     panic!("missing to");
                 };
                 if from_id == to_id {

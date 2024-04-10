@@ -89,6 +89,10 @@ impl<'a, F: FnMut(&mut Ui, &Filament) -> Response, I: Iterator<Item = &'a Filame
             desired_width,
         } = self;
 
+        if ui.button("x").clicked() {
+            buf.clear();
+        }
+
         let mut edit = TextEdit::singleline(buf).hint_text(hint_text);
         if let Some(dw) = desired_width {
             edit = edit.desired_width(dw);
@@ -125,6 +129,7 @@ impl<'a, F: FnMut(&mut Ui, &Filament) -> Response, I: Iterator<Item = &'a Filame
                     if display(ui, &filament).clicked() {
                         *buf = text.to_owned();
                         changed = true;
+                        eprintln!("changed");
 
                         ui.memory_mut(|m| m.close_popup());
                     }

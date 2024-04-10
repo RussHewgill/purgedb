@@ -7,7 +7,7 @@ use super::App;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FilamentPicker {
     id: u32,
-    pub selected: Option<Filament>,
+    selected: Option<Filament>,
     buf: String,
 }
 
@@ -22,8 +22,24 @@ impl Default for FilamentPicker {
 }
 
 impl FilamentPicker {
+    pub fn selected(&self) -> Option<&Filament> {
+        self.selected.as_ref()
+    }
+
+    // pub fn selected_mut(&mut self) -> &mut Option<Filament> {
+    //     &mut self.selected
+    // }
+    pub fn set_selected(&mut self, f: Option<Filament>) {
+        self.selected = f;
+        self.buf = match &self.selected {
+            Some(f) => f.name.clone(),
+            None => String::new(),
+        };
+    }
+
     pub fn reset(&mut self) {
         self.selected = None;
+        self.buf.clear();
     }
 
     pub fn filament_picker(
@@ -35,12 +51,12 @@ impl FilamentPicker {
         // pub fn filament_picker(&mut self, filaments: &[(u32, String)], ui: &mut egui::Ui) {
 
         ui.horizontal(|ui| {
-            if ui.button("x").clicked() {
-                self.selected = None;
-                self.buf.clear();
-            }
+            // if ui.button("x").clicked() {
+            //     self.reset();
+            // }
 
-            ui.add(
+            #[cfg(feature = "nope")]
+            let filter_resp = ui.add(
                 super::dropdown::DropDownBox::from_iter(
                     filaments.iter(),
                     // .map(|f| (f.name.as_str(), f.colored_name())),
@@ -48,36 +64,44 @@ impl FilamentPicker {
                     // &items,
                     self.id,
                     &mut self.buf,
-                    |ui, filament| ui.label(filament.colored_name()),
+                    // |ui, filament| ui.label(filament.colored_name()),
+                    |ui, f| {
+                        //
+                        ui.selectable_value(&mut self.selected, Some(f.clone()), f.colored_name())
+                    },
                 )
+                .filter_by_input(false)
+                .select_on_focus(true)
+                // .desired_width(100.),
                 .desired_width(if let Some(min_width) = min_width {
                     min_width
                 } else {
                     ui.available_width()
                 }),
-            )
+            );
 
-            // // let response = egui::ComboBox::from_label("Select Filament")
-            // let mut response = egui::ComboBox::from_id_source(self.id)
-            //     .width(if let Some(min_width) = min_width {
-            //         min_width
-            //     } else {
-            //         ui.available_width()
-            //     })
-            //     // response
-            //     .selected_text(match &self.selected {
-            //         Some(f) => f.colored_name(),
-            //         None => LayoutJob::default(),
-            //     })
-            //     .show_ui(ui, |ui| {
-            //         // eprintln!("ui.available_width() = {}", ui.available_width());
-            //         for f in filaments.iter() {
-            //             // let w = format!("{} {}", &f.name, &f.display_color());
-            //             ui.selectable_value(&mut self.selected, Some(f.clone()), f.colored_name());
-            //         }
-            //     });
+            // let response = egui::ComboBox::from_label("Select Filament")
+            let mut response = egui::ComboBox::from_id_source(self.id)
+                .width(if let Some(min_width) = min_width {
+                    min_width
+                } else {
+                    ui.available_width()
+                })
+                // response
+                .selected_text(match &self.selected {
+                    Some(f) => f.colored_name(),
+                    None => LayoutJob::default(),
+                })
+                .show_ui(ui, |ui| {
+                    // eprintln!("ui.available_width() = {}", ui.available_width());
+                    for f in filaments.iter() {
+                        // let w = format!("{} {}", &f.name, &f.display_color());
+                        ui.selectable_value(&mut self.selected, Some(f.clone()), f.colored_name());
+                    }
+                });
 
-            // response.response
+            // filter_resp
+            response.response
         })
         .response
     }

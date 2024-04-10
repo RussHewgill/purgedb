@@ -23,11 +23,13 @@ impl App {
                 ui.horizontal(|ui| {
                     if ui.button("Black").clicked() {
                         let f = self.db.get_filament(2).unwrap();
-                        self.enter_purge.picker1.selected = Some(f);
+                        // *self.enter_purge.picker1.selected_mut() = Some(f);
+                        self.enter_purge.picker1.set_selected(Some(f));
                     }
                     if ui.button("White").clicked() {
                         let f = self.db.get_filament(1).unwrap();
-                        self.enter_purge.picker1.selected = Some(f);
+                        // *self.enter_purge.picker1.selected_mut() = Some(f);
+                        self.enter_purge.picker1.set_selected(Some(f));
                     }
                 });
 
@@ -54,13 +56,13 @@ impl App {
                     });
                 });
 
-                if self.enter_purge.picker1.selected != self.enter_purge.prev1 {
-                    self.enter_purge.prev1 = self.enter_purge.picker1.selected.clone();
+                if self.enter_purge.picker1.selected() != self.enter_purge.prev1.as_ref() {
+                    self.enter_purge.prev1 = self.enter_purge.picker1.selected().cloned();
                     self.enter_purge.purge1.clear();
                     self.enter_purge.purge2.clear();
                 }
-                if self.enter_purge.picker2.selected != self.enter_purge.prev2 {
-                    self.enter_purge.prev2 = self.enter_purge.picker2.selected.clone();
+                if self.enter_purge.picker2.selected() != self.enter_purge.prev2.as_ref() {
+                    self.enter_purge.prev2 = self.enter_purge.picker2.selected().cloned();
                     self.enter_purge.purge1.clear();
                     self.enter_purge.purge2.clear();
                 }
@@ -73,8 +75,8 @@ impl App {
                 ui.separator();
 
                 match (
-                    &self.enter_purge.picker1.selected,
-                    &self.enter_purge.picker2.selected,
+                    &self.enter_purge.picker1.selected(),
+                    &self.enter_purge.picker2.selected(),
                 ) {
                     (Some(f1), Some(f2)) => {
                         if f1 == f2 {
