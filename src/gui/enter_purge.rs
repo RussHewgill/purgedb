@@ -13,6 +13,15 @@ pub struct EnterPurge {
     purge2: String,
 }
 
+impl EnterPurge {
+    pub fn set_picker1(&mut self, picker: &FilamentPicker) {
+        self.picker1.set_selected(picker.selected().cloned());
+    }
+    pub fn set_picker2(&mut self, picker: &FilamentPicker) {
+        self.picker2.set_selected(picker.selected().cloned());
+    }
+}
+
 impl App {
     pub fn show_enter_purge(&mut self, ui: &mut egui::Ui) {
         egui::Frame::none()

@@ -266,7 +266,7 @@ impl App {
                                             self.filament_grid.pickers()[to_id].selected(),
                                         ) {
                                             (Some(from), Some(to)) => {
-                                                if let Ok(purge) =
+                                                let button = if let Ok(purge) =
                                                     self.db.get_purge_values(from.id, to.id)
                                                 {
                                                     let purge = match (
@@ -284,7 +284,20 @@ impl App {
                                                         }
                                                         (false, false) => purge,
                                                     };
-                                                    ui.label(format!("{purge}"));
+                                                    // ui.label(format!("{purge}"));
+                                                    egui::Label::new(format!("{:?}", purge))
+                                                } else {
+                                                    egui::Label::new(format!("---"))
+                                                };
+                                                if ui.add(button).clicked() {
+                                                    // eprintln!("clicked");
+                                                    self.enter_purge.set_picker1(
+                                                        &self.filament_grid.pickers()[from_id],
+                                                    );
+                                                    self.enter_purge.set_picker2(
+                                                        &self.filament_grid.pickers()[to_id],
+                                                    );
+                                                    self.current_tab = super::Tab::EnterPurgeValues;
                                                 }
                                             }
                                             _ => {}
