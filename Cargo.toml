@@ -22,8 +22,8 @@ ahash = "0.8.11"
 [dependencies.windows]
 version = "0.52"
 features = [
-  "Win32_Foundation",
-  "Win32_System_Threading",
-  # "UI",
-  "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    # "UI",
+    "Win32_UI_Input_KeyboardAndMouse",
 ]

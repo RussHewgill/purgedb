@@ -7,9 +7,11 @@
 
 mod db;
 mod gui;
-mod input_sender;
 mod search;
 mod types;
+
+#[cfg(target_os = "windows")]
+mod input_sender;
 
 #[cfg(feature = "nope")]
 fn main() {

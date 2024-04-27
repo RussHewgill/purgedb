@@ -323,6 +323,7 @@ impl App {
                         }
                     });
 
+                #[cfg(target_os = "windows")]
                 if ui.button("send to orca").clicked() {
                     self.send_purge_values(self.filament_grid.num_filaments())
                         .unwrap();
@@ -393,6 +394,7 @@ impl App {
             });
     }
 
+    #[cfg(target_os = "windows")]
     fn send_purge_values(&self, num_filaments: usize) -> anyhow::Result<()> {
         // if num_filaments != 4 {
         //   panic!("num_filaments TODO");
