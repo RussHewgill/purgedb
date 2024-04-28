@@ -14,6 +14,12 @@ PurgeDB is a utility for keeping track of filament purge values for printers tha
 
 [Use a file like this to find the correct purge values](https://www.printables.com/model/536401-bambu-lab-ams-purging-strips-p1p)
 
+## Running on Mac
+
+- Download and unzip the file, it should be named `purgedb`
+- Open a terminal in the folder
+- Type `chmod +x purgedb` to set the file as a runnable program
+- Type `./purgedb` to run
 
 ## If this is helpful, consider buying me a coffee
 
