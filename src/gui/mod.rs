@@ -41,6 +41,9 @@ pub struct App {
     // get_purge: GetPurge,
     enter_purge: EnterPurge,
     filament_grid: FilamentGrid,
+
+    default_white: u32,
+    default_black: u32,
 }
 
 impl Default for App {
@@ -56,6 +59,9 @@ impl Default for App {
             // get_purge: GetPurge::default(),
             enter_purge: EnterPurge::default(),
             filament_grid: FilamentGrid::default(),
+
+            default_white: 1,
+            default_black: 2,
         }
     }
 }

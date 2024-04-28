@@ -31,12 +31,12 @@ impl App {
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     if ui.button("Black").clicked() {
-                        let f = self.db.get_filament(2).unwrap();
+                        let f = self.db.get_filament(self.default_black).unwrap();
                         // *self.enter_purge.picker1.selected_mut() = Some(f);
                         self.enter_purge.picker1.set_selected(Some(f));
                     }
                     if ui.button("White").clicked() {
-                        let f = self.db.get_filament(1).unwrap();
+                        let f = self.db.get_filament(self.default_white).unwrap();
                         // *self.enter_purge.picker1.selected_mut() = Some(f);
                         self.enter_purge.picker1.set_selected(Some(f));
                     }

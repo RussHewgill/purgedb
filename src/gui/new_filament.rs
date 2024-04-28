@@ -191,6 +191,19 @@ impl App {
                     }
                 });
 
+                ui.horizontal(|ui| {
+                    if ui.button("Set as default White").clicked() {
+                        if let Some(id) = self.new_filament.selected {
+                            self.default_white = id;
+                        }
+                    }
+                    if ui.button("Set as default black").clicked() {
+                        if let Some(id) = self.new_filament.selected {
+                            self.default_black = id;
+                        }
+                    }
+                });
+
                 ui.separator();
 
                 egui::ScrollArea::vertical().show(ui, |ui| {

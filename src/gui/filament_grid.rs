@@ -188,10 +188,10 @@ impl App {
                         }
                     }
                     if ui.button("White + Black").clicked() {
-                        let f = self.db.get_filament(2).unwrap();
+                        let f = self.db.get_filament(self.default_black).unwrap();
                         // *self.filament_grid.pickers_mut()[1].selected_mut() = Some(f);
                         self.filament_grid.pickers_mut()[1].set_selected(Some(f));
-                        let f = self.db.get_filament(1).unwrap();
+                        let f = self.db.get_filament(self.default_white).unwrap();
                         // *self.filament_grid.pickers_mut()[2].selected_mut() = Some(f);
                         self.filament_grid.pickers_mut()[2].set_selected(Some(f));
                     }
