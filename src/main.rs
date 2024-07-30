@@ -3,7 +3,9 @@
 #![allow(unused_mut)]
 #![allow(dead_code)]
 #![allow(unused_doc_comments)]
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(unexpected_cfgs)]
 
 mod db;
 mod gui;
