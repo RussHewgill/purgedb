@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use egui::{
     text::{LayoutJob, TextWrapping},
     RichText,
@@ -153,6 +155,21 @@ pub enum Material {
     PETG,
     ABS,
     ASA,
+}
+
+pub struct FilamentMap {
+    pub filaments: HashMap<u32, Filament>,
+    // filters:
+}
+
+impl FilamentMap {
+    pub fn new(filaments: HashMap<u32, Filament>) -> Self {
+        Self { filaments }
+    }
+
+    pub fn get(&self, id: &u32) -> Option<&Filament> {
+        self.filaments.get(id)
+    }
 }
 
 // bitflags::bitflags! {

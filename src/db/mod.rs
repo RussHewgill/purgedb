@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{gui::new_filament::NewFilament, search::Keywords, types::Filament};
+use crate::{
+    gui::new_filament::NewFilament,
+    types::{Filament, FilamentMap},
+};
 use hex_color::HexColor;
 use rusqlite::{params, Connection, Result};
 
@@ -66,7 +69,7 @@ impl Db {
         )
     }
 
-    pub fn get_all_filaments(&self) -> Result<(HashMap<u32, Filament>, Vec<Filament>)> {
+    pub fn get_all_filaments(&self) -> Result<(FilamentMap, Vec<Filament>)> {
         let mut stmt = self.db.prepare(
             "SELECT 
         id, 
@@ -114,15 +117,16 @@ impl Db {
             ))
         })?;
         let xs = iter.flatten().collect::<Vec<_>>();
-        Ok((xs.iter().map(|x| (x.id, x.clone())).collect(), xs))
+        let map = FilamentMap::new(xs.iter().map(|x| (x.id, x.clone())).collect());
+
+        Ok((map, xs))
     }
 
-    pub fn get_all_searchable_keywords(&self) -> Result<Keywords> {
-        let names = self.get_all_names()?;
-        let colors = self.get_all_colors()?;
-
-        Ok(Keywords::new(names, colors))
-    }
+    // pub fn get_all_searchable_keywords(&self) -> Result<Keywords> {
+    //     let names = self.get_all_names()?;
+    //     let colors = self.get_all_colors()?;
+    //     Ok(Keywords::new(names, colors))
+    // }
 
     fn get_all_names(&self) -> Result<Vec<(u32, String)>> {
         let mut stmt = self.db.prepare("SELECT id, name FROM filaments")?;

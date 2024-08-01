@@ -35,7 +35,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "PurgeDB",
         native_options,
-        Box::new(|cc| Box::new(App::new(cc))),
+        Box::new(|cc| Ok(Box::new(App::new(cc)))),
     )
 }
 

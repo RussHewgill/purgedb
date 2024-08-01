@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use egui_extras::{Column, TableBuilder};
 
-use crate::types::Filament;
+use crate::types::{Filament, FilamentMap};
 
 use super::{filament_picker::FilamentPicker, text_val::ValText, App};
 
@@ -60,7 +60,7 @@ impl FilamentGridSave {
         }
     }
 
-    pub fn to_grid(&self, filaments: &HashMap<u32, Filament>, grid: &mut FilamentGridData) {
+    pub fn to_grid(&self, filaments: &FilamentMap, grid: &mut FilamentGridData) {
         for i in 0..16 {
             if let Some(id) = self.pickers[i] {
                 let f = filaments.get(&id).unwrap();
@@ -105,7 +105,7 @@ impl FilamentGrid {
         self.grids[index] = Some(FilamentGridSave::from_grid(&self.current));
     }
 
-    pub fn load_picker(&mut self, filaments: &HashMap<u32, Filament>, index: usize) {
+    pub fn load_picker(&mut self, filaments: &FilamentMap, index: usize) {
         if let Some(data) = &self.grids[index] {
             data.to_grid(filaments, &mut self.current);
         }

@@ -8,19 +8,20 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.76"
 bitflags = "2.4.1"
-eframe = { version = "0.27.0", features = ["persistence"] }
-egui = "0.27.0"
-egui_extras = "0.27.0"
-env_logger = "0.10.1"
-fuzzy-matcher = "0.3.7"
+eframe = { version = "0.28.1", features = ["persistence"] }
+egui = "0.28.1"
+egui_extras = "0.28.1"
+env_logger = "0.11.5"
+# fuzzy-matcher = "0.3.7"
 hex_color = { version = "3.0.0", features = ["serde"] }
 rand = "0.8.5"
-rusqlite = { version = "0.31.0", features = ["bundled"] }
+rusqlite = { version = "0.32.1", features = ["bundled"] }
 serde = { version = "1.0.193", features = ["derive"] }
 ahash = "0.8.11"
+nucleo = "0.5.0"
 
 [dependencies.windows]
-version = "0.52"
+version = "0.58.0"
 features = [
     "Win32_Foundation",
     "Win32_System_Threading",

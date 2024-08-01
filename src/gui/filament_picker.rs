@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use egui::{text::LayoutJob, Color32, FontFamily, FontId, Response, TextFormat};
 
-use crate::types::Filament;
+use crate::types::{Filament, FilamentMap};
 
 use super::App;
 
@@ -24,11 +24,7 @@ impl Default for FilamentPicker {
 }
 
 impl FilamentPicker {
-    // pub fn to_saved(&self) -> (Option<Filament>, String) {
-    //     (self.selected.clone(), self.buf.clone())
-    // }
     pub fn to_saved(&self) -> Option<u32> {
-        // (self.selected.clone(), self.buf.clone())
         self.selected.as_ref().map(|f| f.id)
     }
 
@@ -36,9 +32,6 @@ impl FilamentPicker {
         self.selected.as_ref()
     }
 
-    // pub fn selected_mut(&mut self) -> &mut Option<Filament> {
-    //     &mut self.selected
-    // }
     pub fn set_selected(&mut self, f: Option<Filament>) {
         self.selected = f;
         self.buf = match &self.selected {
@@ -59,12 +52,11 @@ impl FilamentPicker {
     pub fn filament_picker(
         &mut self,
         min_width: Option<f32>,
-        filaments_map: &HashMap<u32, Filament>,
+        // filaments_map: &HashMap<u32, Filament>,
+        filaments_map: &FilamentMap,
         filaments: &[Filament],
         ui: &mut egui::Ui,
     ) -> Response {
-        // pub fn filament_picker(&mut self, filaments: &[(u32, String)], ui: &mut egui::Ui) {
-
         ui.horizontal(|ui| {
             // if ui.button("x").clicked() {
             //     self.reset();
