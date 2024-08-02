@@ -401,7 +401,8 @@ impl App {
         //   panic!("num_filaments TODO");
         // }
 
-        crate::input_sender::alt_tab()?;
+        // crate::input_sender::alt_tab()?;
+        crate::input_sender::focus_first_input()?;
         std::thread::sleep(std::time::Duration::from_millis(400));
         // eprintln!("alt-tab");
 

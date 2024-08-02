@@ -99,26 +99,8 @@ unsafe extern "system" fn enum_child_proc(
     // }
 }
 
-pub fn main() -> Result<()> {
-    // let key = 0x41; // a
-
-    // press_key(key, KEY_FLAGS_DOWN)?;
-    // std::thread::sleep(std::time::Duration::from_millis(30));
-    // press_key(key, KEY_FLAGS_UP)?;
-
-    // send_number(123)?;
-
-    // alt_tab()?;
-
+pub fn focus_first_input() -> Result<()> {
     use windows::{core::*, Win32::Foundation::*, Win32::UI::WindowsAndMessaging::*};
-
-    // let hwnd = unsafe {
-    //     FindWindowW(
-    //         PCWSTR::null(),
-    //         // PCWSTR::null(),
-    //         &window_name,
-    //     )
-    // }?;
 
     let parent_hwnd = get_window("Flushing Volumes for filament change")?;
 

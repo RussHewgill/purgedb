@@ -15,12 +15,12 @@ mod types;
 #[cfg(target_os = "windows")]
 mod input_sender;
 
-// #[cfg(feature = "nope")]
+#[cfg(feature = "nope")]
 fn main() {
     let _ = crate::input_sender::main();
 }
 
-#[cfg(feature = "nope")]
+// #[cfg(feature = "nope")]
 fn main() -> eframe::Result<()> {
     use gui::App;
 

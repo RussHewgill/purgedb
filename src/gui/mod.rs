@@ -129,6 +129,7 @@ impl eframe::App for App {
             // ui.separator();
         });
 
+        #[cfg(feature = "nope")]
         egui::TopBottomPanel::bottom("bot_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("X").clicked() {
