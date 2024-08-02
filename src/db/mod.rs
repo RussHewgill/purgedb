@@ -122,11 +122,12 @@ impl Db {
         Ok((map, xs))
     }
 
-    // pub fn get_all_searchable_keywords(&self) -> Result<Keywords> {
-    //     let names = self.get_all_names()?;
-    //     let colors = self.get_all_colors()?;
-    //     Ok(Keywords::new(names, colors))
-    // }
+    #[cfg(feature = "nope")]
+    pub fn get_all_searchable_keywords(&self) -> Result<crate::search::Keywords> {
+        let names = self.get_all_names()?;
+        let colors = self.get_all_colors()?;
+        Ok(crate::search::Keywords::new(names, colors))
+    }
 
     fn get_all_names(&self) -> Result<Vec<(u32, String)>> {
         let mut stmt = self.db.prepare("SELECT id, name FROM filaments")?;

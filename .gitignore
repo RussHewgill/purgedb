@@ -3,3 +3,4 @@ test*.db*
 *.lnk
 tasks.json
 backup/*
+.vscode/settings.json

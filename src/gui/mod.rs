@@ -42,6 +42,12 @@ pub struct App {
     enter_purge: EnterPurge,
     filament_grid: FilamentGrid,
 
+    pub filament_filter: String,
+    #[serde(skip)]
+    nucleo: Option<nucleo::Nucleo<u32>>,
+    #[serde(skip)]
+    matcher: Option<nucleo::Matcher>,
+
     default_white: u32,
     default_black: u32,
 }
@@ -50,6 +56,16 @@ impl Default for App {
     fn default() -> Self {
         let db = Db::new().unwrap();
         db.test_filaments().unwrap();
+
+        let filter = nucleo::Nucleo::new(
+            nucleo::Config::DEFAULT,
+            std::sync::Arc::new(|| {
+                //
+            }),
+            Some(1),
+            1,
+        );
+
         Self {
             db,
             current_tab: Tab::default(),
@@ -59,6 +75,10 @@ impl Default for App {
             // get_purge: GetPurge::default(),
             enter_purge: EnterPurge::default(),
             filament_grid: FilamentGrid::default(),
+
+            filament_filter: String::new(),
+            nucleo: Some(filter),
+            matcher: None,
 
             default_white: 1,
             default_black: 2,
@@ -107,6 +127,23 @@ impl eframe::App for App {
                 ui.selectable_value(&mut self.current_tab, Tab::FilamentGrid, "Filament Grid");
             });
             // ui.separator();
+        });
+
+        egui::TopBottomPanel::bottom("bot_panel").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                if ui.button("X").clicked() {
+                    self.filament_filter.clear();
+                    self.nucleo.as_mut().unwrap().restart(true);
+                }
+                ui.label("Filter:");
+                if ui
+                    .add(egui::TextEdit::singleline(&mut self.filament_filter))
+                    .changed()
+                {
+
+                    //
+                }
+            });
         });
 
         match self.current_tab {

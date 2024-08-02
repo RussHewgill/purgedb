@@ -1,3 +1,20 @@
+//
+
+pub struct Keywords {
+    // pub names: Vec<(u32, String)>,
+    // pub colors: Vec<(u32, String)>,
+}
+
+impl Keywords {
+    pub fn new(names: Vec<(u32, String)>, colors: Vec<(u32, String)>) -> Self {
+        Self {
+            // matcher: SkimMatcherV2::default(),
+            // names,
+            // colors,
+        }
+    }
+}
+
 #[cfg(feature = "nope")]
 mod prev {
     use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};

@@ -175,6 +175,7 @@ impl FilamentGrid {
 impl App {
     pub fn show_filament_grid(&mut self, ui: &mut egui::Ui) {
         let filaments = self.db.get_all_filaments().unwrap();
+        // let keywords = self.db.get_all_searchable_keywords().unwrap();
 
         egui::Frame::none()
             .outer_margin(5.)

@@ -27,4 +27,5 @@ features = [
     "Win32_System_Threading",
     # "UI",
     "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
 ]
