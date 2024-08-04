@@ -54,7 +54,8 @@ impl FilamentPicker {
         min_width: Option<f32>,
         // filaments_map: &HashMap<u32, Filament>,
         filaments_map: &FilamentMap,
-        filaments: &[Filament],
+        filaments: &[(u32, Filament)],
+        filter: &Option<regex::Regex>,
         ui: &mut egui::Ui,
     ) -> Response {
         ui.horizontal(|ui| {
@@ -95,6 +96,7 @@ impl FilamentPicker {
                 } else {
                     ui.available_width()
                 })
+                .height(250.)
                 // response
                 .selected_text(match &self.selected {
                     Some(f) => f.colored_name(),
@@ -102,9 +104,27 @@ impl FilamentPicker {
                 })
                 .show_ui(ui, |ui| {
                     // eprintln!("ui.available_width() = {}", ui.available_width());
-                    for (_, f) in filaments.iter().enumerate() {
+                    for (_, f) in filaments.iter() {
                         // let w = format!("{} {}", &f.name, &f.display_color());
-                        ui.selectable_value(&mut self.selected, Some(f.clone()), f.colored_name());
+
+                        if let Some(re) = filter {
+                            if re.is_match(&f.name) || re.is_match(&f.manufacturer) {
+                                ui.selectable_value(
+                                    &mut self.selected,
+                                    Some(f.clone()),
+                                    f.colored_name(),
+                                );
+                            }
+                        } else {
+                            ui.selectable_value(
+                                &mut self.selected,
+                                Some(f.clone()),
+                                f.colored_name(),
+                            );
+                        }
+
+                        // if f.name.contains(filter) || f.manufacturer.contains(filter) {
+                        // }
                     }
                 });
 

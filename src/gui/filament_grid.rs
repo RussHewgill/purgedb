@@ -244,6 +244,7 @@ impl App {
                                         Some(400.),
                                         &filaments.0,
                                         &filaments.1,
+                                        &self.filament_regex,
                                         ui,
                                     );
                                 });

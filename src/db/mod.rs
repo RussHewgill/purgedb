@@ -69,7 +69,7 @@ impl Db {
         )
     }
 
-    pub fn get_all_filaments(&self) -> Result<(FilamentMap, Vec<Filament>)> {
+    pub fn get_all_filaments(&self) -> Result<(FilamentMap, Vec<(u32, Filament)>)> {
         let mut stmt = self.db.prepare(
             "SELECT 
         id, 
@@ -116,8 +116,13 @@ impl Db {
                 notes,
             ))
         })?;
-        let xs = iter.flatten().collect::<Vec<_>>();
-        let map = FilamentMap::new(xs.iter().map(|x| (x.id, x.clone())).collect());
+        let xs = iter
+            .flatten()
+            .enumerate()
+            .map(|(i, x)| (i as u32, x))
+            .collect::<Vec<_>>();
+        // let map = FilamentMap::new(xs.iter().map(|x| (x.id, x.clone())).collect());
+        let map = FilamentMap::new(xs.iter().map(|(i, x)| (*i as u32, x.clone())).collect());
 
         Ok((map, xs))
     }
@@ -129,7 +134,7 @@ impl Db {
         Ok(crate::search::Keywords::new(names, colors))
     }
 
-    fn get_all_names(&self) -> Result<Vec<(u32, String)>> {
+    pub fn get_all_names(&self) -> Result<Vec<(u32, String)>> {
         let mut stmt = self.db.prepare("SELECT id, name FROM filaments")?;
         let names_iter = stmt.query_map([], |row| {
             let id: u32 = row.get(0)?;

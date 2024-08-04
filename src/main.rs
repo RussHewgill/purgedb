@@ -15,9 +15,54 @@ mod types;
 #[cfg(target_os = "windows")]
 mod input_sender;
 
+use anyhow::{anyhow, bail, ensure, Context, Result};
+use log::{debug, error, info, trace, warn};
+
 #[cfg(feature = "nope")]
-fn main() {
-    let _ = crate::input_sender::main();
+fn main() -> Result<()> {
+    env_logger::init();
+
+    let db = db::Db::new().unwrap();
+
+    let names = db.get_all_names().unwrap();
+    // let names = names.iter().map(|(_, n)| n).collect::<Vec<_>>();
+
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
+
+    // #[cfg(feature = "nope")]
+    let filter: nucleo::Nucleo<u32> = nucleo::Nucleo::new(
+        nucleo::Config::DEFAULT,
+        std::sync::Arc::new(move || {
+            tx.send(()).unwrap();
+        }),
+        Some(1),
+        1,
+    );
+
+    let injector = filter.injector();
+
+    // for (i, name) in names.iter() {
+    //     // injector.insert(*i, name.clone());
+    //     injector.push(i, |i|)
+    // }
+
+    debug!("looping");
+    loop {
+        match rx.recv() {
+            Ok(_) => {
+                debug!("got recv");
+            }
+            Err(e) => {
+                error!("recv error: {:?}", e);
+                break;
+            }
+        }
+
+        // break;
+    }
+
+    debug!("done");
+    Ok(())
 }
 
 // #[cfg(feature = "nope")]

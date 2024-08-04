@@ -58,12 +58,14 @@ impl App {
                             None,
                             &filaments.0,
                             &filaments.1,
+                            &self.filament_regex,
                             ui,
                         );
                         let resp2 = self.enter_purge.picker2.filament_picker(
                             None,
                             &filaments.0,
                             &filaments.1,
+                            &self.filament_regex,
                             ui,
                         );
                     });

@@ -43,11 +43,14 @@ pub struct App {
     filament_grid: FilamentGrid,
 
     pub filament_filter: String,
-    #[serde(skip)]
-    nucleo: Option<nucleo::Nucleo<u32>>,
-    #[serde(skip)]
-    matcher: Option<nucleo::Matcher>,
 
+    #[serde(skip)]
+    pub filament_regex: Option<regex::Regex>,
+
+    // #[serde(skip)]
+    // nucleo: Option<nucleo::Nucleo<u32>>,
+    // #[serde(skip)]
+    // matcher: Option<nucleo::Matcher>,
     default_white: u32,
     default_black: u32,
 }
@@ -55,16 +58,16 @@ pub struct App {
 impl Default for App {
     fn default() -> Self {
         let db = Db::new().unwrap();
-        db.test_filaments().unwrap();
+        // db.test_filaments().unwrap();
 
-        let filter = nucleo::Nucleo::new(
-            nucleo::Config::DEFAULT,
-            std::sync::Arc::new(|| {
-                //
-            }),
-            Some(1),
-            1,
-        );
+        // let filter = nucleo::Nucleo::new(
+        //     nucleo::Config::DEFAULT,
+        //     std::sync::Arc::new(|| {
+        //         //
+        //     }),
+        //     Some(1),
+        //     1,
+        // );
 
         Self {
             db,
@@ -77,9 +80,9 @@ impl Default for App {
             filament_grid: FilamentGrid::default(),
 
             filament_filter: String::new(),
-            nucleo: Some(filter),
-            matcher: None,
-
+            filament_regex: None,
+            // nucleo: Some(filter),
+            // matcher: None,
             default_white: 1,
             default_black: 2,
         }
@@ -129,19 +132,30 @@ impl eframe::App for App {
             // ui.separator();
         });
 
-        #[cfg(feature = "nope")]
+        // #[cfg(feature = "nope")]
         egui::TopBottomPanel::bottom("bot_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("X").clicked() {
                     self.filament_filter.clear();
-                    self.nucleo.as_mut().unwrap().restart(true);
+                    self.filament_regex = None;
+                    // self.nucleo.as_mut().unwrap().restart(true);
                 }
                 ui.label("Filter:");
                 if ui
                     .add(egui::TextEdit::singleline(&mut self.filament_filter))
                     .changed()
                 {
-
+                    match regex::RegexBuilder::new(&self.filament_filter)
+                        .case_insensitive(true)
+                        .build()
+                    {
+                        Ok(r) => {
+                            self.filament_regex = Some(r);
+                        }
+                        Err(_) => {
+                            ui.label("Invalid Regex");
+                        }
+                    }
                     //
                 }
             });

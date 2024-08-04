@@ -209,7 +209,7 @@ impl App {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     // egui::Frame::none().show(ui, |ui| {
                     // for (f_id, (_, f)) in filaments.iter().enumerate() {
-                    for (f_id, f) in filaments.1.iter().enumerate() {
+                    for (f_id, f) in filaments.1.iter() {
                         ui.selectable_value(
                             &mut self.new_filament.selected,
                             Some(f.id),
