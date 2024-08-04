@@ -24,37 +24,67 @@ fn main() -> Result<()> {
 
     let db = db::Db::new().unwrap();
 
-    let names = db.get_all_names().unwrap();
+    // let names = db.get_all_names().unwrap();
     // let names = names.iter().map(|(_, n)| n).collect::<Vec<_>>();
+    let (filament_map, filaments) = db.get_all_filaments().unwrap();
 
     let (tx, rx) = std::sync::mpsc::channel::<()>();
 
     // #[cfg(feature = "nope")]
-    let filter: nucleo::Nucleo<u32> = nucleo::Nucleo::new(
+    let mut filter: nucleo::Nucleo<(u32, types::Filament)> = nucleo::Nucleo::new(
         nucleo::Config::DEFAULT,
         std::sync::Arc::new(move || {
             tx.send(()).unwrap();
         }),
         Some(1),
-        1,
+        2,
     );
 
     let injector = filter.injector();
 
-    // for (i, name) in names.iter() {
-    //     // injector.insert(*i, name.clone());
-    //     injector.push(i, |i|)
-    // }
+    for f in filaments.iter() {
+        injector.push(f.clone(), |(_, filament), buf| {
+            buf[0] = filament.name.clone().into();
+            buf[1] = filament.manufacturer.clone().into();
+        });
+    }
+
+    filter.pattern.reparse(
+        // column,
+        0,
+        "poly",
+        nucleo::pattern::CaseMatching::Smart,
+        nucleo::pattern::Normalization::Never,
+        false,
+    );
+    filter.tick(50);
 
     debug!("looping");
     loop {
-        match rx.recv() {
+        std::thread::sleep(std::time::Duration::from_millis(1000));
+
+        filter.tick(50);
+
+        match rx.try_recv() {
             Ok(_) => {
                 debug!("got recv");
+                let snapshot = filter.snapshot();
+                debug!("snapshot.item_count = {}", snapshot.item_count());
+                debug!("matched_item_count = {}", snapshot.matched_item_count());
+
+                let mut n = 0;
+                for f in snapshot.matched_items(..) {
+                    n += 1;
+                    let f = &f.data;
+                    debug!("f = {:?}", f);
+                }
+                debug!("n = {}", n);
+
+                break;
             }
             Err(e) => {
                 error!("recv error: {:?}", e);
-                break;
+                // break;
             }
         }
 

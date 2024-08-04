@@ -45,6 +45,7 @@ impl App {
                 ui.separator();
 
                 let filaments = self.db.get_all_filaments().unwrap();
+                self.update_filtered_filaments(&filaments.0);
 
                 ui.horizontal(|ui| {
                     if ui.button("Swap").clicked() {
@@ -58,14 +59,18 @@ impl App {
                             None,
                             &filaments.0,
                             &filaments.1,
-                            &self.filament_regex,
+                            // &self.filament_regex,
+                            self.nucleo.as_ref().unwrap().snapshot(),
+                            !self.filament_filter.is_empty(),
                             ui,
                         );
                         let resp2 = self.enter_purge.picker2.filament_picker(
                             None,
                             &filaments.0,
                             &filaments.1,
-                            &self.filament_regex,
+                            // &self.filament_regex,
+                            self.nucleo.as_ref().unwrap().snapshot(),
+                            !self.filament_filter.is_empty(),
                             ui,
                         );
                     });

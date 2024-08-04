@@ -108,6 +108,7 @@ impl App {
     // pub fn show_new_filament(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
     pub fn show_new_filament(&mut self, ctx: &egui::Context) {
         let filaments = self.db.get_all_filaments().unwrap();
+        self.update_filtered_filaments(&filaments.0);
 
         egui::panel::SidePanel::right("Filament Picker Panel")
             .min_width(400.)
@@ -207,16 +208,26 @@ impl App {
                 ui.separator();
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    // egui::Frame::none().show(ui, |ui| {
-                    // for (f_id, (_, f)) in filaments.iter().enumerate() {
-                    for (f_id, f) in filaments.1.iter() {
-                        ui.selectable_value(
-                            &mut self.new_filament.selected,
-                            Some(f.id),
-                            f.colored_name(),
-                        );
+                    if self.filament_filter.is_empty() {
+                        for (f_id, f) in filaments.1.iter() {
+                            ui.selectable_value(
+                                &mut self.new_filament.selected,
+                                Some(f.id),
+                                f.colored_name(),
+                            );
+                        }
+                    } else {
+                        let snapshot = self.nucleo.as_ref().unwrap().snapshot();
+                        for f in snapshot.matched_items(..) {
+                            let f = &f.data;
+                            ui.selectable_value(
+                                &mut self.new_filament.selected,
+                                Some(f.0),
+                                f.1.colored_name(),
+                            );
+                        }
                     }
-                    // });
+
                     ui.allocate_space(ui.available_size());
                 });
             });
@@ -352,6 +363,7 @@ impl App {
                     self.db
                         .add_filament(&self.new_filament, self.new_filament.row_id)
                         .unwrap();
+                    self.updated_filaments = false;
                     ui.label(format!("Added Filament: {}", &self.new_filament.name));
                 } else {
                     eprintln!("missing fields");

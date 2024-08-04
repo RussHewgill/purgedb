@@ -176,6 +176,7 @@ impl App {
     pub fn show_filament_grid(&mut self, ui: &mut egui::Ui) {
         let filaments = self.db.get_all_filaments().unwrap();
         // let keywords = self.db.get_all_searchable_keywords().unwrap();
+        self.update_filtered_filaments(&filaments.0);
 
         egui::Frame::none()
             .outer_margin(5.)
@@ -244,7 +245,9 @@ impl App {
                                         Some(400.),
                                         &filaments.0,
                                         &filaments.1,
-                                        &self.filament_regex,
+                                        // &self.filament_regex,
+                                        self.nucleo.as_ref().unwrap().snapshot(),
+                                        !self.filament_filter.is_empty(),
                                         ui,
                                     );
                                 });

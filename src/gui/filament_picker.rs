@@ -55,7 +55,9 @@ impl FilamentPicker {
         // filaments_map: &HashMap<u32, Filament>,
         filaments_map: &FilamentMap,
         filaments: &[(u32, Filament)],
-        filter: &Option<regex::Regex>,
+        // filter: &Option<regex::Regex>,
+        snapshot: &nucleo::Snapshot<(u32, Filament)>,
+        filter: bool,
         ui: &mut egui::Ui,
     ) -> Response {
         ui.horizontal(|ui| {
@@ -104,24 +106,49 @@ impl FilamentPicker {
                 })
                 .show_ui(ui, |ui| {
                     // eprintln!("ui.available_width() = {}", ui.available_width());
-                    for (_, f) in filaments.iter() {
-                        // let w = format!("{} {}", &f.name, &f.display_color());
 
-                        if let Some(re) = filter {
-                            if re.is_match(&f.name) || re.is_match(&f.manufacturer) {
-                                ui.selectable_value(
-                                    &mut self.selected,
-                                    Some(f.clone()),
-                                    f.colored_name(),
-                                );
-                            }
-                        } else {
+                    if filter {
+                        // log::debug!("matched_item_count = {}", n);
+                        // log::debug!("snapshot.item_count = {}", snapshot.item_count());
+                        // log::debug!("matched_item_count = {}", snapshot.matched_item_count());
+
+                        for f in snapshot.matched_items(..) {
+                            let f = &f.data;
+                            ui.selectable_value(
+                                &mut self.selected,
+                                Some(f.1.clone()),
+                                f.1.colored_name(),
+                            );
+                        }
+                    } else {
+                        for (_, f) in filaments.iter() {
                             ui.selectable_value(
                                 &mut self.selected,
                                 Some(f.clone()),
                                 f.colored_name(),
                             );
                         }
+                    }
+
+                    #[cfg(feature = "nope")]
+                    for (_, f) in filaments.iter() {
+                        // let w = format!("{} {}", &f.name, &f.display_color());
+
+                        // if let Some(re) = filter {
+                        //     if re.is_match(&f.name) || re.is_match(&f.manufacturer) {
+                        //         ui.selectable_value(
+                        //             &mut self.selected,
+                        //             Some(f.clone()),
+                        //             f.colored_name(),
+                        //         );
+                        //     }
+                        // } else {
+                        //     ui.selectable_value(
+                        //         &mut self.selected,
+                        //         Some(f.clone()),
+                        //         f.colored_name(),
+                        //     );
+                        // }
 
                         // if f.name.contains(filter) || f.manufacturer.contains(filter) {
                         // }

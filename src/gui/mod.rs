@@ -8,7 +8,7 @@ pub mod filament_picker;
 pub mod new_filament;
 pub mod text_val;
 
-use crate::db::Db;
+use crate::{db::Db, types::Filament};
 
 use self::{enter_purge::EnterPurge, filament_grid::FilamentGrid, new_filament::NewFilament};
 
@@ -42,13 +42,19 @@ pub struct App {
     enter_purge: EnterPurge,
     filament_grid: FilamentGrid,
 
+    #[serde(skip)]
     pub filament_filter: String,
 
     #[serde(skip)]
     pub filament_regex: Option<regex::Regex>,
 
-    // #[serde(skip)]
-    // nucleo: Option<nucleo::Nucleo<u32>>,
+    #[serde(skip)]
+    nucleo: Option<nucleo::Nucleo<(u32, Filament)>>,
+    #[serde(skip)]
+    injector: Option<nucleo::Injector<(u32, Filament)>>,
+    #[serde(skip)]
+    updated_filaments: bool,
+
     // #[serde(skip)]
     // matcher: Option<nucleo::Matcher>,
     default_white: u32,
@@ -69,6 +75,8 @@ impl Default for App {
         //     1,
         // );
 
+        // let injector = filter.injector();
+
         Self {
             db,
             current_tab: Tab::default(),
@@ -81,8 +89,13 @@ impl Default for App {
 
             filament_filter: String::new(),
             filament_regex: None,
+
             // nucleo: Some(filter),
-            // matcher: None,
+            // injector: Some(injector),
+            nucleo: None,
+            injector: None,
+            updated_filaments: false,
+
             default_white: 1,
             default_black: 2,
         }
@@ -96,11 +109,49 @@ impl App {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        let mut out: Self = if let Some(storage) = cc.storage {
+            eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
+        } else {
+            Default::default()
+        };
+
+        let filter = nucleo::Nucleo::new(
+            nucleo::Config::DEFAULT,
+            std::sync::Arc::new(|| {
+                //
+            }),
+            Some(1),
+            1,
+        );
+
+        let injector = filter.injector();
+
+        out.nucleo = Some(filter);
+        out.injector = Some(injector);
+
+        out
+    }
+
+    pub fn update_filtered_filaments(&mut self, map: &crate::types::FilamentMap) {
+        if self.updated_filaments {
+            return;
         }
 
-        Default::default()
+        self.nucleo.as_mut().unwrap().restart(true);
+        self.injector = Some(self.nucleo.as_ref().unwrap().injector());
+
+        let injector = self.injector.as_mut().unwrap();
+
+        for (id, f) in map.filaments.iter() {
+            let f = (id.clone(), f.clone());
+            injector.push(f, |(_, filament), buf| {
+                buf[0] = format!("{} {}", filament.manufacturer, filament.name).into();
+                // buf[0] = filament.name.clone().into();
+                // buf[1] = filament.manufacturer.clone().into();
+            });
+        }
+
+        self.updated_filaments = true;
     }
 }
 
@@ -112,6 +163,8 @@ impl eframe::App for App {
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // ctx.set_visuals(egui::style::Visuals::dark());
+
+        self.nucleo.as_mut().unwrap().tick(10);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // ui.separator();
@@ -139,12 +192,22 @@ impl eframe::App for App {
                     self.filament_filter.clear();
                     self.filament_regex = None;
                     // self.nucleo.as_mut().unwrap().restart(true);
+                    // self.nucleo.as_mut().unwrap().pattern
                 }
                 ui.label("Filter:");
                 if ui
                     .add(egui::TextEdit::singleline(&mut self.filament_filter))
                     .changed()
                 {
+                    self.nucleo.as_mut().unwrap().pattern.reparse(
+                        0,
+                        &self.filament_filter,
+                        nucleo::pattern::CaseMatching::Smart,
+                        nucleo::pattern::Normalization::Smart,
+                        false,
+                    );
+
+                    #[cfg(feature = "nope")]
                     match regex::RegexBuilder::new(&self.filament_filter)
                         .case_insensitive(true)
                         .build()
