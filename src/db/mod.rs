@@ -118,8 +118,9 @@ impl Db {
         })?;
         let xs = iter
             .flatten()
-            .enumerate()
-            .map(|(i, x)| (i as u32, x))
+            // .enumerate()
+            // .map(|(i, x)| (i as u32, x))
+            .map(|f| (f.id, f))
             .collect::<Vec<_>>();
         // let map = FilamentMap::new(xs.iter().map(|x| (x.id, x.clone())).collect());
         let map = FilamentMap::new(xs.iter().map(|(i, x)| (*i as u32, x.clone())).collect());

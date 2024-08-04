@@ -45,9 +45,8 @@ pub struct App {
     #[serde(skip)]
     pub filament_filter: String,
 
-    #[serde(skip)]
-    pub filament_regex: Option<regex::Regex>,
-
+    // #[serde(skip)]
+    // pub filament_regex: Option<regex::Regex>,
     #[serde(skip)]
     nucleo: Option<nucleo::Nucleo<(u32, Filament)>>,
     #[serde(skip)]
@@ -88,7 +87,7 @@ impl Default for App {
             filament_grid: FilamentGrid::default(),
 
             filament_filter: String::new(),
-            filament_regex: None,
+            // filament_regex: None,
 
             // nucleo: Some(filter),
             // injector: Some(injector),
@@ -164,6 +163,10 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // ctx.set_visuals(egui::style::Visuals::dark());
 
+        if cfg!(debug_assertions) && ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+
         self.nucleo.as_mut().unwrap().tick(10);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -190,15 +193,26 @@ impl eframe::App for App {
             ui.horizontal(|ui| {
                 if ui.button("X").clicked() {
                     self.filament_filter.clear();
-                    self.filament_regex = None;
-                    // self.nucleo.as_mut().unwrap().restart(true);
-                    // self.nucleo.as_mut().unwrap().pattern
+                    // self.filament_regex = None;
+                    self.nucleo.as_mut().unwrap().restart(true);
+                    self.injector = Some(self.nucleo.as_ref().unwrap().injector());
                 }
                 ui.label("Filter:");
-                if ui
-                    .add(egui::TextEdit::singleline(&mut self.filament_filter))
-                    .changed()
-                {
+
+                let resp = ui.add(egui::TextEdit::singleline(&mut self.filament_filter));
+
+                if ctx.input(|i| i.key_pressed(egui::Key::F1)) {
+                    resp.request_focus();
+                }
+                if ctx.input(|i| i.key_pressed(egui::Key::F4)) {
+                    resp.request_focus();
+                    self.filament_filter.clear();
+                    // self.filament_regex = None;
+                    self.nucleo.as_mut().unwrap().restart(true);
+                    self.injector = Some(self.nucleo.as_ref().unwrap().injector());
+                }
+
+                if resp.changed() {
                     self.nucleo.as_mut().unwrap().pattern.reparse(
                         0,
                         &self.filament_filter,
