@@ -231,7 +231,7 @@ impl Db {
 
 /// new, modify filament
 impl Db {
-    pub fn delete_filament(&self, id: u32) -> Result<()> {
+    pub fn delete_filament(&mut self, id: u32) -> Result<()> {
         match self.db.execute(
             "DELETE FROM filaments WHERE id = ?1",
             [id],
@@ -241,10 +241,11 @@ impl Db {
             Err(e) => eprintln!("e = {:?}", e),
             // Err(e) => {}
         }
+        self.stale_filament = true;
         Ok(())
     }
 
-    pub fn add_filament(&self, filament: &NewFilament, id: Option<u32>) -> Result<()> {
+    pub fn add_filament(&mut self, filament: &NewFilament, id: Option<u32>) -> Result<()> {
         // fn get_col(c: [u8; 3]) -> String {
         //   format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2])
         // }
@@ -308,10 +309,11 @@ impl Db {
       }
         }
 
+        self.stale_filament = true;
         Ok(())
     }
 
-    pub fn set_purge_values(&self, id_from: u32, id_to: u32, purge: u32) -> Result<()> {
+    pub fn set_purge_values(&mut self, id_from: u32, id_to: u32, purge: u32) -> Result<()> {
         match self.db.execute(
             "INSERT OR REPLACE INTO purge_values (id_from, id_to, purge) VALUES (?1, ?2, ?3)",
             (id_from, id_to, purge),
@@ -319,6 +321,7 @@ impl Db {
             Ok(_) => (),
             Err(e) => eprintln!("e = {:?}", e),
         }
+        self.stale_filament = true;
         Ok(())
     }
 
