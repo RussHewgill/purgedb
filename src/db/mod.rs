@@ -1,3 +1,5 @@
+pub mod history;
+
 use std::collections::HashMap;
 
 use crate::{
@@ -7,20 +9,44 @@ use crate::{
 use hex_color::HexColor;
 use rusqlite::{params, Connection, Result};
 
+const CACHE_DURATION: std::time::Duration = std::time::Duration::from_secs(30);
+
 pub struct Db {
-    db: Connection,
+    // db: Connection,
+    pub db: Connection,
+
+    cache_filaments: (FilamentMap, Vec<(u32, Filament)>),
+    last_updated_filament: std::time::Instant,
+    stale_filament: bool,
+
+    cache_history: Vec<()>,
+    last_updated_history: std::time::Instant,
+    stale_history: bool,
 }
 
 impl Default for Db {
     fn default() -> Self {
         let db = Self::new().unwrap();
-        db.test_filaments().unwrap();
+        // db.test_filaments().unwrap();
         db
     }
 }
 
+/// get filament
 impl Db {
+    pub fn is_stale_filament(&self) -> bool {
+        self.stale_filament || self.last_updated_filament.elapsed() > CACHE_DURATION
+    }
+
     pub fn get_filament(&self, id: u32) -> Result<Filament> {
+        if !self.is_stale_filament() {
+            if let Some(f) = self.cache_filaments.0.get(&id).cloned() {
+                return Ok(f);
+            }
+        }
+
+        eprintln!("get_filament");
+
         self.db.query_row(
             "SELECT 
         id, 
@@ -69,7 +95,13 @@ impl Db {
         )
     }
 
-    pub fn get_all_filaments(&self) -> Result<(FilamentMap, Vec<(u32, Filament)>)> {
+    pub fn get_all_filaments(&mut self) -> Result<(FilamentMap, Vec<(u32, Filament)>)> {
+        if !self.is_stale_filament() {
+            return Ok(self.cache_filaments.clone());
+        }
+
+        eprintln!("get_all_filaments");
+
         let mut stmt = self.db.prepare(
             "SELECT 
         id, 
@@ -125,6 +157,10 @@ impl Db {
         // let map = FilamentMap::new(xs.iter().map(|x| (x.id, x.clone())).collect());
         let map = FilamentMap::new(xs.iter().map(|(i, x)| (*i as u32, x.clone())).collect());
 
+        self.cache_filaments = (map.clone(), xs.clone());
+        self.stale_filament = false;
+        self.last_updated_filament = std::time::Instant::now();
+
         Ok((map, xs))
     }
 
@@ -156,6 +192,7 @@ impl Db {
     }
 }
 
+#[cfg(feature = "nope")]
 impl Db {
     pub fn test_filaments(&self) -> Result<()> {
         // self.add_filament(&NewFilament::new("Polylite", "Polymaker", "#FFFFFF", "PLA"))?;
@@ -192,6 +229,7 @@ impl Db {
     }
 }
 
+/// new, modify filament
 impl Db {
     pub fn delete_filament(&self, id: u32) -> Result<()> {
         match self.db.execute(
@@ -324,6 +362,17 @@ impl Db {
             (), // empty list of parameters.
         )?;
 
-        Ok(Self { db: conn })
+        Self::init_history(&conn)?;
+
+        Ok(Self {
+            db: conn,
+            cache_filaments: (FilamentMap::new(HashMap::new()), vec![]),
+            last_updated_filament: std::time::Instant::now(),
+            stale_filament: true,
+
+            cache_history: vec![],
+            last_updated_history: std::time::Instant::now(),
+            stale_history: true,
+        })
     }
 }

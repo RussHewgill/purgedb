@@ -5,6 +5,7 @@ pub mod filament_picker;
 // pub mod get_purge;
 // pub mod edit_filament;
 // pub mod dropdown;
+pub mod history_tab;
 pub mod new_filament;
 pub mod text_val;
 
@@ -19,6 +20,7 @@ pub enum Tab {
     NewFilament,
     // EditFilament,
     FilamentGrid,
+    History,
 }
 
 impl Default for Tab {
@@ -41,6 +43,9 @@ pub struct App {
     // get_purge: GetPurge,
     enter_purge: EnterPurge,
     filament_grid: FilamentGrid,
+
+    #[serde(skip)]
+    pub history_sort: Option<(usize, history_tab::SortOrder)>,
 
     #[serde(skip)]
     pub filament_filter: String,
@@ -85,6 +90,8 @@ impl Default for App {
             // get_purge: GetPurge::default(),
             enter_purge: EnterPurge::default(),
             filament_grid: FilamentGrid::default(),
+
+            history_sort: None,
 
             filament_filter: String::new(),
             // filament_regex: None,
@@ -184,6 +191,7 @@ impl eframe::App for App {
                     "Enter Purge Values",
                 );
                 ui.selectable_value(&mut self.current_tab, Tab::FilamentGrid, "Filament Grid");
+                ui.selectable_value(&mut self.current_tab, Tab::History, "History");
             });
             // ui.separator();
         });
@@ -203,14 +211,15 @@ impl eframe::App for App {
 
                 if ctx.input(|i| i.key_pressed(egui::Key::F1)) {
                     resp.request_focus();
-                }
-                if ctx.input(|i| i.key_pressed(egui::Key::F4)) {
-                    resp.request_focus();
                     self.filament_filter.clear();
                     // self.filament_regex = None;
                     self.nucleo.as_mut().unwrap().restart(true);
                     self.injector = Some(self.nucleo.as_ref().unwrap().injector());
+                    self.updated_filaments = false;
                 }
+                // if ctx.input(|i| i.key_pressed(egui::Key::F4)) {
+                //     resp.request_focus();
+                // }
 
                 if resp.changed() {
                     self.nucleo.as_mut().unwrap().pattern.reparse(
@@ -251,6 +260,9 @@ impl eframe::App for App {
             // Tab::EditFilament => self.show_edit_filament(ui),
             Tab::FilamentGrid => {
                 egui::CentralPanel::default().show(ctx, |ui| self.show_filament_grid(ui));
+            }
+            Tab::History => {
+                egui::CentralPanel::default().show(ctx, |ui| self.show_history_tab(ui));
             }
         }
 

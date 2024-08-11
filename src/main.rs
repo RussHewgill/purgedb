@@ -95,6 +95,91 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+/// history test
+#[cfg(feature = "nope")]
+fn main() -> anyhow::Result<()> {
+    // let n = std::mem::size_of::<gui::filament_grid::FilamentGridSave>();
+    // let n = std::mem::size_of::<gui::filament_picker::FilamentPicker>();
+    // eprintln!("n = {}", n);
+
+    let path = "test.db";
+
+    let conn = rusqlite::Connection::open(path)?;
+
+    let db = db::Db { db: conn };
+
+    #[cfg(feature = "nope")]
+    {
+        // db.init_history()?;
+
+        let mut grid = gui::filament_grid::FilamentGrid::default();
+
+        *grid.num_filaments_mut() = 2;
+
+        let f0 = types::Filament {
+            id: 1,
+            name: "PolyLite Red".to_string(),
+            manufacturer: "Polymaker".to_string(),
+            color_base: hex_color::HexColor {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 255,
+            },
+            colors: vec![hex_color::HexColor {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 255,
+            }],
+            material: "PLA".to_string(),
+            notes: "".to_string(),
+        };
+
+        let f1 = types::Filament {
+            id: 2,
+            name: "PolyLite Green".to_string(),
+            manufacturer: "Polymaker".to_string(),
+            color_base: hex_color::HexColor {
+                r: 0,
+                g: 255,
+                b: 0,
+                a: 255,
+            },
+            colors: vec![hex_color::HexColor {
+                r: 0,
+                g: 255,
+                b: 0,
+                a: 255,
+            }],
+            material: "PLA".to_string(),
+            notes: "".to_string(),
+        };
+
+        let p0 = &mut grid.pickers_mut()[0];
+        p0.set_selected(Some(f0));
+
+        let p1 = &mut grid.pickers_mut()[1];
+        p1.set_selected(Some(f1));
+
+        let i0 = grid.current.id(0);
+        eprintln!("i0 = {:?}", i0);
+
+        let i1 = grid.current.id(1);
+        eprintln!("i1 = {:?}", i1);
+
+        // db.add_to_history(&grid.current)?;
+    }
+
+    let history = db.fetch_history(None)?;
+
+    for h in history.iter() {
+        eprintln!("h = {:?}", h);
+    }
+
+    Ok(())
+}
+
 // #[cfg(feature = "nope")]
 fn main() -> eframe::Result<()> {
     use gui::App;

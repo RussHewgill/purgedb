@@ -24,6 +24,10 @@ impl Default for FilamentPicker {
 }
 
 impl FilamentPicker {
+    // pub fn id(&self) -> u32 {
+    //     self.id
+    // }
+
     pub fn to_saved(&self) -> Option<u32> {
         self.selected.as_ref().map(|f| f.id)
     }

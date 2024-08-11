@@ -157,6 +157,7 @@ pub enum Material {
     ASA,
 }
 
+#[derive(Debug, Default, Clone)]
 pub struct FilamentMap {
     pub filaments: HashMap<u32, Filament>,
     // filters:

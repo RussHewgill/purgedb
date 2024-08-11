@@ -9,7 +9,8 @@ use super::{filament_picker::FilamentPicker, text_val::ValText, App};
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct FilamentGrid {
     // current: usize,
-    current: FilamentGridData,
+    // current: FilamentGridData,
+    pub current: FilamentGridData,
     // grids: Vec<FilamentGridData>,
     // #[serde(skip)]
     grids: [Option<FilamentGridSave>; 4],
@@ -36,11 +37,25 @@ pub struct FilamentGridData {
     pub use_offset: bool,
 }
 
+impl FilamentGridData {
+    pub fn id(&self, n: usize) -> Option<u32> {
+        if n >= self.pickers.len() {
+            None
+        } else {
+            self.pickers[n].selected().map(|f| f.id)
+            // Some(self.pickers[n].id())
+        }
+    }
+    pub fn num_filaments(&self) -> usize {
+        self.num_filaments
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FilamentGridSave {
     // pickers: [(Option<Filament>, String); 16],
-    pickers: [Option<u32>; 16],
-    num_filaments: usize,
+    pub pickers: [Option<u32>; 16],
+    pub num_filaments: usize,
     pub multiplier: f32,
     pub use_multiplier: bool,
     pub offset: u32,
@@ -48,6 +63,17 @@ pub struct FilamentGridSave {
 }
 
 impl FilamentGridSave {
+    pub fn new() -> Self {
+        Self {
+            pickers: [None; 16],
+            num_filaments: 4,
+            multiplier: 1.0,
+            use_multiplier: false,
+            offset: 0,
+            use_offset: false,
+        }
+    }
+
     pub fn from_grid(grid: &FilamentGridData) -> Self {
         let pickers = std::array::from_fn(|i| grid.pickers[i].to_saved());
         Self {
@@ -330,8 +356,9 @@ impl App {
 
                 #[cfg(target_os = "windows")]
                 if ui.button("send to orca").clicked() {
-                    self.send_purge_values(self.filament_grid.num_filaments())
-                        .unwrap();
+                    if let Err(e) = self.send_purge_values(self.filament_grid.num_filaments()) {
+                        eprintln!("send_purge_values error: {:?}", e);
+                    }
                 }
 
                 ui.separator();
@@ -404,6 +431,9 @@ impl App {
         // if num_filaments != 4 {
         //   panic!("num_filaments TODO");
         // }
+
+        /// save history
+        self.db.add_to_history(&self.filament_grid.current)?;
 
         // crate::input_sender::alt_tab()?;
         crate::input_sender::focus_first_input()?;
