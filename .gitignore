@@ -4,3 +4,4 @@ test*.db*
 tasks.json
 backup/*
 .vscode/settings.json
+*.log

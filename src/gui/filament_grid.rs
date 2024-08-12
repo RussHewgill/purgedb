@@ -4,7 +4,7 @@ use egui_extras::{Column, TableBuilder};
 
 use crate::types::{Filament, FilamentMap};
 
-use super::{filament_picker::FilamentPicker, text_val::ValText, App};
+use super::{filament_picker::FilamentPicker, history_tab::HistoryRow, text_val::ValText, App};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct FilamentGrid {
@@ -48,6 +48,32 @@ impl FilamentGridData {
     }
     pub fn num_filaments(&self) -> usize {
         self.num_filaments
+    }
+
+    pub fn load_from_history(&mut self, filaments: &FilamentMap, history: &HistoryRow) {
+        self.num_filaments = history.num_filaments;
+        for (i, id) in history.filaments.iter().enumerate() {
+            if let Some(f) = filaments.get(id) {
+                self.pickers[i].set_selected(Some(f.clone()));
+            } else {
+                self.pickers[i].reset();
+            }
+        }
+        if let Some(m) = history.multiplier {
+            self.multiplier = m as f32;
+            self.use_multiplier = true;
+        } else {
+            self.multiplier = 0.;
+            self.use_multiplier = false;
+        }
+
+        if let Some(o) = history.offset {
+            self.offset = o as u32;
+            self.use_offset = true;
+        } else {
+            self.offset = 0;
+            self.use_offset = false;
+        }
     }
 }
 
@@ -427,7 +453,7 @@ impl App {
     }
 
     #[cfg(target_os = "windows")]
-    fn send_purge_values(&self, num_filaments: usize) -> anyhow::Result<()> {
+    fn send_purge_values(&mut self, num_filaments: usize) -> anyhow::Result<()> {
         // if num_filaments != 4 {
         //   panic!("num_filaments TODO");
         // }
@@ -436,10 +462,11 @@ impl App {
         self.db.add_to_history(&self.filament_grid.current)?;
 
         // crate::input_sender::alt_tab()?;
-        crate::input_sender::focus_first_input()?;
+        crate::input_sender::focus_first_input(num_filaments)?;
         std::thread::sleep(std::time::Duration::from_millis(400));
         // eprintln!("alt-tab");
 
+        // #[cfg(feature = "nope")]
         for from_id in 0..num_filaments {
             let Some(from) = &self.filament_grid.pickers()[from_id].selected() else {
                 panic!("missing from");

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use egui::{
     text::{LayoutJob, TextWrapping},
-    RichText,
+    Rect, RichText,
 };
 use hex_color::HexColor;
 
@@ -124,6 +124,50 @@ impl Filament {
         );
 
         job
+    }
+
+    pub fn stacked_colored_box(&self, ui: &mut egui::Ui, size: f32) {
+        let size = egui::Vec2::splat(size);
+
+        let (response, painter) = ui.allocate_painter(size, egui::Sense::hover());
+        let rect = response.rect;
+
+        match self.colors.len() {
+            0 => {
+                let c = self.color_base;
+                painter.rect_filled(rect, 0., egui::Color32::from_rgb(c.r, c.g, c.b));
+            }
+            1 => {
+                let c0 = self.color_base;
+                let r0 = Rect::from_min_max(rect.min, rect.center_bottom());
+                painter.rect_filled(r0, 0., egui::Color32::from_rgb(c0.r, c0.g, c0.b));
+
+                let c1 = self.colors[0];
+                let r1 = Rect::from_min_max(rect.center_top(), rect.max);
+                painter.rect_filled(r1, 0., egui::Color32::from_rgb(c1.r, c1.g, c1.b));
+                //
+            }
+            2 => {
+                let x = rect.width() / 3.;
+
+                let c0 = self.color_base;
+                let r0 = Rect::from_min_max(rect.min, rect.left_bottom() + egui::Vec2::new(x, 0.));
+                painter.rect_filled(r0, 0., egui::Color32::from_rgb(c0.r, c0.g, c0.b));
+
+                let c1 = self.colors[0];
+                let r1 = Rect::from_min_max(
+                    rect.left_top() + egui::Vec2::new(x, 0.),
+                    rect.left_bottom() + egui::Vec2::new(2. * x, 0.),
+                );
+                painter.rect_filled(r1, 0., egui::Color32::from_rgb(c1.r, c1.g, c1.b));
+
+                let c2 = self.colors[1];
+                let r2 = Rect::from_min_max(rect.right_top() - egui::Vec2::new(x, 0.), rect.max);
+                painter.rect_filled(r2, 0., egui::Color32::from_rgb(c2.r, c2.g, c2.b));
+            }
+            n => eprintln!("unexpected number of colors: {}", n),
+        }
+        painter.rect_stroke(rect, 0., (1., egui::Color32::BLACK));
     }
 
     #[cfg(feature = "nope")]

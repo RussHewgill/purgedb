@@ -3,7 +3,7 @@ pub mod history;
 use std::collections::HashMap;
 
 use crate::{
-    gui::new_filament::NewFilament,
+    gui::{history_tab::HistoryRow, new_filament::NewFilament},
     types::{Filament, FilamentMap},
 };
 use hex_color::HexColor;
@@ -19,7 +19,8 @@ pub struct Db {
     last_updated_filament: std::time::Instant,
     stale_filament: bool,
 
-    cache_history: Vec<()>,
+    cache_history: Vec<HistoryRow>,
+    cache_history_sort: Option<(usize, crate::gui::history_tab::SortOrder)>,
     last_updated_history: std::time::Instant,
     stale_history: bool,
 }
@@ -374,6 +375,7 @@ impl Db {
             stale_filament: true,
 
             cache_history: vec![],
+            cache_history_sort: None,
             last_updated_history: std::time::Instant::now(),
             stale_history: true,
         })

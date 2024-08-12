@@ -1,3 +1,6 @@
+// use anyhow::{anyhow, bail, ensure, Context, Result};
+use tracing::{debug, error, info, trace, warn};
+
 use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection, Result};
 
@@ -38,8 +41,12 @@ impl Db {
         Ok(())
     }
 
-    pub fn add_to_history(&self, grid: &crate::gui::filament_grid::FilamentGridData) -> Result<()> {
-        // eprintln!("saving history: {:?}", grid);
+    pub fn add_to_history(
+        &mut self,
+        grid: &crate::gui::filament_grid::FilamentGridData,
+    ) -> Result<()> {
+        // debug!("saving history: {:?}", grid);
+        debug!("saving history");
 
         // let ps = params![]
 
@@ -75,6 +82,7 @@ impl Db {
             Err(e) => {}
         }
 
+        self.stale_history = true;
         Ok(())
     }
 
@@ -82,10 +90,37 @@ impl Db {
         self.stale_history || self.last_updated_history.elapsed() > super::CACHE_DURATION
     }
 
+    fn sort_history_cache(&mut self, sort: Option<(usize, crate::gui::history_tab::SortOrder)>) {
+        match sort {
+            None | Some((0, crate::gui::history_tab::SortOrder::Ascending)) => {
+                self.cache_history.sort_by_key(|r| r.timestamp);
+            }
+            Some((0, crate::gui::history_tab::SortOrder::Descending)) => {
+                self.cache_history.sort_by_key(|r| r.timestamp);
+                self.cache_history.reverse();
+            }
+            _ => (),
+        }
+        self.cache_history_sort = sort;
+    }
+
     pub fn fetch_history(
-        &self,
+        &mut self,
         sort: Option<(usize, crate::gui::history_tab::SortOrder)>,
     ) -> Result<Vec<HistoryRow>> {
+        // debug!("fetch_history");
+        if !self.is_stale_history() {
+            if sort == self.cache_history_sort {
+                // debug!("returning cached history 0");
+                return Ok(self.cache_history.clone());
+            } else {
+                // debug!("returning cached history 1");
+                self.sort_history_cache(sort);
+                return Ok(self.cache_history.clone());
+            }
+        }
+        debug!("reading history from db");
+
         let mut stmt = "SELECT
             timestamp,
             num_slots,
@@ -124,6 +159,7 @@ impl Db {
         let mut stmt = self.db.prepare(&stmt)?;
 
         let iter = stmt.query_map([], |row| {
+            // eprintln!("row = {:?}", row);
             let timestamp: i64 = row.get(0)?;
             let timestamp: DateTime<Utc> =
                 DateTime::from_timestamp(timestamp, 0).unwrap_or_default();
@@ -136,15 +172,27 @@ impl Db {
                 filaments.push(row.get(i + 2)?);
             }
 
+            let multiplier = row.get(18)?;
+            let offset = row.get(19)?;
+
             Ok(HistoryRow {
                 timestamp,
                 num_filaments,
                 filaments,
+                multiplier,
+                offset,
             })
         })?;
 
         let out = iter.flatten().collect::<Vec<_>>();
+        drop(stmt);
 
-        Ok(out)
+        self.cache_history = out;
+        self.sort_history_cache(sort);
+
+        self.stale_history = false;
+        self.last_updated_history = std::time::Instant::now();
+
+        Ok(self.cache_history.clone())
     }
 }

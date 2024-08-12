@@ -14,9 +14,10 @@ mod types;
 
 #[cfg(target_os = "windows")]
 mod input_sender;
+pub mod logging;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
-use log::{debug, error, info, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 
 #[cfg(feature = "nope")]
 fn main() -> Result<()> {
@@ -102,11 +103,7 @@ fn main() -> anyhow::Result<()> {
     // let n = std::mem::size_of::<gui::filament_picker::FilamentPicker>();
     // eprintln!("n = {}", n);
 
-    let path = "test.db";
-
-    let conn = rusqlite::Connection::open(path)?;
-
-    let db = db::Db { db: conn };
+    let mut db = db::Db::new()?;
 
     #[cfg(feature = "nope")]
     {
@@ -173,9 +170,18 @@ fn main() -> anyhow::Result<()> {
 
     let history = db.fetch_history(None)?;
 
+    eprintln!("history.len() = {}", history.len());
+
     for h in history.iter() {
         eprintln!("h = {:?}", h);
     }
+
+    // let fs = vec![143, 2, 1, 72];
+
+    // for id in fs.iter() {
+    //     let f = db.get_filament(*id)?;
+    //     eprintln!("f = {:?}", f);
+    // }
 
     Ok(())
 }
@@ -184,7 +190,10 @@ fn main() -> anyhow::Result<()> {
 fn main() -> eframe::Result<()> {
     use gui::App;
 
-    env_logger::init();
+    // env_logger::init();
+    if cfg!(debug_assertions) {
+        logging::init_logs();
+    }
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()

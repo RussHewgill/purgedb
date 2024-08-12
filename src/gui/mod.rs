@@ -50,6 +50,9 @@ pub struct App {
     #[serde(skip)]
     pub filament_filter: String,
 
+    #[serde(skip)]
+    pub material_filter: String,
+
     // #[serde(skip)]
     // pub filament_regex: Option<regex::Regex>,
     #[serde(skip)]
@@ -95,6 +98,7 @@ impl Default for App {
 
             filament_filter: String::new(),
             // filament_regex: None,
+            material_filter: String::new(),
 
             // nucleo: Some(filter),
             // injector: Some(injector),
@@ -209,7 +213,10 @@ impl eframe::App for App {
 
                 let resp = ui.add(egui::TextEdit::singleline(&mut self.filament_filter));
 
-                if ctx.input(|i| i.key_pressed(egui::Key::F1)) {
+                // let key = egui::Key::F1;
+                let key = egui::Key::Backtick;
+
+                if ctx.input(|i| i.key_pressed(key)) {
                     resp.request_focus();
                     self.filament_filter.clear();
                     // self.filament_regex = None;
@@ -243,6 +250,13 @@ impl eframe::App for App {
                         }
                     }
                     //
+                }
+
+                ui.label("Material:");
+                let mat_resp = ui.add(egui::TextEdit::singleline(&mut self.material_filter));
+
+                if ctx.input(|i| i.key_pressed(egui::Key::F1)) {
+                    mat_resp.request_focus();
                 }
             });
         });

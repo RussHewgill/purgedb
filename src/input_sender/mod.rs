@@ -99,12 +99,12 @@ unsafe extern "system" fn enum_child_proc(
     // }
 }
 
-pub fn focus_first_input() -> Result<()> {
+pub fn focus_first_input(num_filaments: usize) -> Result<()> {
     use windows::{core::*, Win32::Foundation::*, Win32::UI::WindowsAndMessaging::*};
 
     let parent_hwnd = get_window("Flushing Volumes for filament change")?;
 
-    eprintln!("hwnd 0 = {:?}", parent_hwnd);
+    // eprintln!("hwnd 0 = {:?}", parent_hwnd);
 
     unsafe {
         let _ = SetForegroundWindow(parent_hwnd);
@@ -118,22 +118,22 @@ pub fn focus_first_input() -> Result<()> {
             LPARAM(0),
         );
 
-        eprintln!("b = {:?}", b);
+        // eprintln!("b = {:?}", b);
 
-        eprintln!("FOUND_HWND = {:?}", FOUND_HWND);
+        // eprintln!("FOUND_HWND = {:?}", FOUND_HWND);
 
         if !FOUND_HWND.is_invalid() {
-            eprintln!("setting focus");
+            // eprintln!("setting focus");
 
             let proc_id = GetWindowThreadProcessId(parent_hwnd, Some(std::ptr::null_mut()));
-            eprintln!("proc_id = {:08X}", proc_id);
+            // eprintln!("proc_id = {:08X}", proc_id);
 
             let current_thread = GetCurrentThreadId();
             let b = AttachThreadInput(current_thread, proc_id, TRUE);
-            eprintln!("b = {:?}", b);
+            // eprintln!("b = {:?}", b);
 
             let b = windows::Win32::UI::Input::KeyboardAndMouse::SetFocus(FOUND_HWND);
-            eprint!("b = {:?}", b);
+            // eprint!("b = {:?}", b);
 
             // let res = SendMessageW(FOUND_HWND, WM_SETFOCUS, WPARAM(0), LPARAM(0));
             // eprintln!("res = {:?}", res);
@@ -144,6 +144,14 @@ pub fn focus_first_input() -> Result<()> {
         //
     }
 
+    // match num_filaments {
+    //     2 => shift_tab(4)?,
+    //     3 => shift_tab(9)?,
+    //     4 => shift_tab(16)?,
+    //     _ => {}
+    // }
+
+    /// only works when Orca has 4 filaments
     shift_tab(16)?;
 
     Ok(())
