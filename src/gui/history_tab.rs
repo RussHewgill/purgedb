@@ -13,6 +13,7 @@ pub enum SortOrder {
 
 #[derive(Debug, Clone)]
 pub struct HistoryRow {
+    pub id: u32,
     pub timestamp: chrono::DateTime<chrono::Utc>,
     pub num_filaments: usize,
     pub filaments: Vec<u32>,
@@ -27,6 +28,8 @@ impl App {
 
         // debug!("history.len() = {}", history.len());
 
+        ui.checkbox(&mut self.history_hide_duplicates, "Hide duplicates (TODO)");
+
         let row_height = 20.;
         // let row_height = 52.;
 
@@ -38,6 +41,7 @@ impl App {
             .column(Column::exact(250.)) // filaments
             // .column(Column::auto().at_least(100.)) // load button
             .column(Column::exact(100.)) // load button
+            .column(Column::exact(100.)) // remove button
             .header(35., |mut header| {
                 header.col(|ui| {
                     if ui.heading("Timestamp").clicked() {
@@ -72,7 +76,13 @@ impl App {
                                     let Some(filament) = filament_map.get(f) else {
                                         continue;
                                     };
-                                    filament.stacked_colored_box(ui, 18.);
+                                    let resp = filament.stacked_colored_box(ui, 18.);
+
+                                    resp.on_hover_text(format!(
+                                        "{} {}",
+                                        filament.manufacturer, filament.name
+                                    ));
+
                                     ui.separator();
                                 }
                             });
@@ -81,13 +91,22 @@ impl App {
                         });
                         row.col(|ui| {
                             if ui.button("Load").clicked() {
-                                eprintln!("load button clicked");
-
                                 self.filament_grid
                                     .current
                                     .load_from_history(&filament_map, entry);
                                 self.current_tab = crate::gui::Tab::FilamentGrid;
                             }
+                        });
+                        row.col(|ui| {
+                            if ui.button("Remove").clicked() {
+                                if let Err(e) = self.db.remove_history(entry.id) {
+                                    error!("remove_history = {:?}", e);
+                                }
+                            }
+
+                            // if self.new_filament.confirm_delete.is_some() && !button.hovered() {
+                            //     self.new_filament.confirm_delete = None;
+                            // }
                         });
                     });
                 }

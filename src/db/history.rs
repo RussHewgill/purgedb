@@ -104,6 +104,13 @@ impl Db {
         self.cache_history_sort = sort;
     }
 
+    pub fn remove_history(&mut self, id: u32) -> Result<()> {
+        self.db
+            .execute("DELETE FROM send_history WHERE id = ?1", params![id])?;
+        self.stale_history = true;
+        Ok(())
+    }
+
     pub fn fetch_history(
         &mut self,
         sort: Option<(usize, crate::gui::history_tab::SortOrder)>,
@@ -121,7 +128,9 @@ impl Db {
         }
         debug!("reading history from db");
 
-        let mut stmt = "SELECT
+        let mut stmt = {
+            "SELECT
+            id,
             timestamp,
             num_slots,
             slot1,
@@ -144,7 +153,8 @@ impl Db {
             offset
       FROM send_history
       "
-        .to_string();
+            .to_string()
+        };
 
         match sort {
             Some((0, crate::gui::history_tab::SortOrder::Ascending)) => {
@@ -159,23 +169,38 @@ impl Db {
         let mut stmt = self.db.prepare(&stmt)?;
 
         let iter = stmt.query_map([], |row| {
+            let id = match row.get(0) {
+                Ok(id) => id,
+                Err(e) => {
+                    error!("row.get(0) = {:?}", e);
+                    panic!("row.get(0) = {:?}", e);
+                }
+            };
+
             // eprintln!("row = {:?}", row);
-            let timestamp: i64 = row.get(0)?;
+            let timestamp: i64 = row.get(1)?;
             let timestamp: DateTime<Utc> =
                 DateTime::from_timestamp(timestamp, 0).unwrap_or_default();
 
-            let num_filaments = row.get(1)?;
+            let num_filaments = row.get(2)?;
 
             let mut filaments = vec![];
 
             for i in 0..num_filaments {
-                filaments.push(row.get(i + 2)?);
+                filaments.push(row.get(i + 3)?);
             }
 
-            let multiplier = row.get(18)?;
-            let offset = row.get(19)?;
+            let multiplier = match row.get(19) {
+                Ok(multiplier) => Some(multiplier),
+                Err(e) => None,
+            };
+            let offset = match row.get(20) {
+                Ok(offset) => Some(offset),
+                Err(e) => None,
+            };
 
             Ok(HistoryRow {
+                id,
                 timestamp,
                 num_filaments,
                 filaments,

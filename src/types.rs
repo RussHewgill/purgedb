@@ -126,7 +126,7 @@ impl Filament {
         job
     }
 
-    pub fn stacked_colored_box(&self, ui: &mut egui::Ui, size: f32) {
+    pub fn stacked_colored_box(&self, ui: &mut egui::Ui, size: f32) -> egui::Response {
         let size = egui::Vec2::splat(size);
 
         let (response, painter) = ui.allocate_painter(size, egui::Sense::hover());
@@ -168,6 +168,8 @@ impl Filament {
             n => eprintln!("unexpected number of colors: {}", n),
         }
         painter.rect_stroke(rect, 0., (1., egui::Color32::BLACK));
+
+        response
     }
 
     #[cfg(feature = "nope")]

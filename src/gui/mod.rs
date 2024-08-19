@@ -47,6 +47,8 @@ pub struct App {
     #[serde(skip)]
     pub history_sort: Option<(usize, history_tab::SortOrder)>,
 
+    pub history_hide_duplicates: bool,
+
     #[serde(skip)]
     pub filament_filter: String,
 
@@ -95,6 +97,7 @@ impl Default for App {
             filament_grid: FilamentGrid::default(),
 
             history_sort: None,
+            history_hide_duplicates: true,
 
             filament_filter: String::new(),
             // filament_regex: None,

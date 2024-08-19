@@ -63,7 +63,7 @@ impl FilamentGridData {
             self.multiplier = m as f32;
             self.use_multiplier = true;
         } else {
-            self.multiplier = 0.;
+            self.multiplier = 1.;
             self.use_multiplier = false;
         }
 
