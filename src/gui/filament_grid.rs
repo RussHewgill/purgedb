@@ -282,7 +282,23 @@ impl App {
                         {
                             if let Some(f) = &f.selected() {
                                 header.col(|ui| {
-                                    ui.label(f.colored_box(true));
+                                    // ui.label(f.colored_box_vert());
+                                    f.colored_box_vert(ui);
+
+                                    // let text = "\u{2B1B}";
+
+                                    // let mut job = egui::text::LayoutJob::default();
+
+                                    // job.append(
+                                    //     text,
+                                    //     0.0,
+                                    //     egui::TextFormat {
+                                    //         color: egui::Color32::RED,
+                                    //         ..Default::default()
+                                    //     },
+                                    // );
+
+                                    // ui.label(job);
                                 });
                             } else {
                                 header.col(|ui| {});
@@ -425,7 +441,7 @@ impl App {
                                 for k in 0..data.num_filaments {
                                     if let Some(f) = data.pickers[k] {
                                         if let Some(f) = filaments.0.get(&f) {
-                                            ui.label(f.colored_box(false));
+                                            ui.label(f.colored_box_text(false));
                                         }
                                     }
                                 }

@@ -14,7 +14,8 @@ pub enum SortOrder {
 #[derive(Debug, Clone)]
 pub struct HistoryRow {
     pub id: u32,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    // pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp: chrono::DateTime<chrono::Local>,
     pub num_filaments: usize,
     pub filaments: Vec<u32>,
     pub multiplier: Option<f64>,
@@ -66,7 +67,11 @@ impl App {
                 for entry in history.iter() {
                     body.row(row_height, |mut row| {
                         row.col(|ui| {
-                            ui.label(format!("{}", entry.timestamp));
+                            // ui.label(format!("{}", entry.timestamp));
+                            ui.label(format!(
+                                "{}",
+                                entry.timestamp.format("%Y-%m-%d %I:%M:%S %p")
+                            ));
                         });
                         row.col(|ui| {
                             ui.horizontal(|ui| {

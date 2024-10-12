@@ -158,12 +158,16 @@ impl Db {
 
         match sort {
             Some((0, crate::gui::history_tab::SortOrder::Ascending)) => {
+                debug!("sort by timestamp ASC");
                 stmt.push_str(&format!("ORDER BY timestamp ASC"));
             }
             Some((0, crate::gui::history_tab::SortOrder::Descending)) => {
+                debug!("sort by timestamp DESC");
                 stmt.push_str(&format!("ORDER BY timestamp DESC"));
             }
-            _ => (),
+            _ => {
+                debug!("no sort");
+            }
         }
 
         let mut stmt = self.db.prepare(&stmt)?;
@@ -181,6 +185,8 @@ impl Db {
             let timestamp: i64 = row.get(1)?;
             let timestamp: DateTime<Utc> =
                 DateTime::from_timestamp(timestamp, 0).unwrap_or_default();
+
+            let timestamp = DateTime::from(timestamp);
 
             let num_filaments = row.get(2)?;
 

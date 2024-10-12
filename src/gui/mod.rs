@@ -7,6 +7,7 @@ pub mod filament_picker;
 // pub mod dropdown;
 pub mod history_tab;
 pub mod new_filament;
+pub mod options;
 pub mod text_val;
 
 use crate::{db::Db, types::Filament};
@@ -21,6 +22,7 @@ pub enum Tab {
     // EditFilament,
     FilamentGrid,
     History,
+    Options,
 }
 
 impl Default for Tab {
@@ -97,6 +99,7 @@ impl Default for App {
             filament_grid: FilamentGrid::default(),
 
             history_sort: None,
+            // history_sort: Some((0, history_tab::SortOrder::Descending)),
             history_hide_duplicates: true,
 
             filament_filter: String::new(),
@@ -127,6 +130,8 @@ impl App {
         } else {
             Default::default()
         };
+
+        out.history_sort = Some((0, history_tab::SortOrder::Descending));
 
         let filter = nucleo::Nucleo::new(
             nucleo::Config::DEFAULT,
@@ -199,6 +204,7 @@ impl eframe::App for App {
                 );
                 ui.selectable_value(&mut self.current_tab, Tab::FilamentGrid, "Filament Grid");
                 ui.selectable_value(&mut self.current_tab, Tab::History, "History");
+                ui.selectable_value(&mut self.current_tab, Tab::Options, "Options");
             });
             // ui.separator();
         });
@@ -280,6 +286,9 @@ impl eframe::App for App {
             }
             Tab::History => {
                 egui::CentralPanel::default().show(ctx, |ui| self.show_history_tab(ui));
+            }
+            Tab::Options => {
+                egui::CentralPanel::default().show(ctx, |ui| self.show_options_tab(ui));
             }
         }
 

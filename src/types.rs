@@ -40,7 +40,57 @@ impl Filament {
         }
     }
 
-    pub fn colored_box(&self, vert: bool) -> LayoutJob {
+    pub fn colored_box_vert(&self, ui: &mut egui::Ui) {
+        let square_size = 14.0;
+        let transparent = egui::Color32::from_rgba_premultiplied(0, 0, 0, 0);
+        // let stroke = (1.0, egui::Color32::BLACK);
+
+        ui.vertical(|ui| {
+            let (response, painter) =
+                ui.allocate_painter(egui::vec2(square_size, square_size), egui::Sense::hover());
+            let rect = Rect::from_min_size(response.rect.min, egui::vec2(square_size, square_size));
+            if let Some(c) = self.colors.get(1) {
+                painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(c.r, c.g, c.b));
+                // painter.rect_stroke(rect.shrink(1.0), 0.0, stroke);
+            } else {
+                painter.rect_filled(rect, 0.0, transparent);
+            }
+
+            let (response, painter) =
+                ui.allocate_painter(egui::vec2(square_size, square_size), egui::Sense::hover());
+            let rect = Rect::from_min_size(response.rect.min, egui::vec2(square_size, square_size));
+            if let Some(c) = self.colors.get(0) {
+                painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(c.r, c.g, c.b));
+                // painter.rect_stroke(rect.shrink(1.0), 0.0, stroke);
+            } else {
+                painter.rect_filled(rect, 0.0, transparent);
+            }
+
+            let (response, painter) =
+                ui.allocate_painter(egui::vec2(square_size, square_size), egui::Sense::hover());
+            let rect = Rect::from_min_size(response.rect.min, egui::vec2(square_size, square_size));
+            painter.rect_filled(
+                rect,
+                0.0,
+                egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b),
+            );
+            // painter.rect_stroke(rect.shrink(1.0), 0.0, stroke);
+        });
+    }
+
+    #[cfg(feature = "nope")]
+    pub fn colored_box(&self, ui: &mut egui::Ui, vert: bool) {
+        if vert {
+            self.colored_box_vert(ui);
+        } else {
+            // self.colored_box_horiz(ui);
+        }
+    }
+
+    pub fn colored_box_text(&self, vert: bool) -> LayoutJob {
+        if vert {
+            panic!("vert colored text not implemented");
+        }
         // RichText::new("\u{2B1B}").color(
         //   egui::Color32::from_rgb(self.color_base.r, self.color_base.g, self.color_base.b)
         // )
@@ -110,7 +160,7 @@ impl Filament {
 
     pub fn colored_name(&self) -> LayoutJob {
         // let mut job = LayoutJob::default();
-        let mut job = self.colored_box(false);
+        let mut job = self.colored_box_text(false);
 
         job.append(
             &format!("{} {}", &self.manufacturer, &self.name),

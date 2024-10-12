@@ -95,7 +95,7 @@ impl FilamentPicker {
             );
 
             // let response = egui::ComboBox::from_label("Select Filament")
-            let mut response = egui::ComboBox::from_id_source(self.id)
+            let mut response = egui::ComboBox::from_id_salt(self.id)
                 // let mut response = super::dropdown::DropDownBox::from_id_source(self.id)
                 .width(if let Some(min_width) = min_width {
                     min_width
