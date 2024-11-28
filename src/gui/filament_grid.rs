@@ -61,7 +61,7 @@ impl FilamentGridData {
         }
         if let Some(m) = history.multiplier {
             self.multiplier = m as f32;
-            self.use_multiplier = true;
+            self.use_multiplier = false;
         } else {
             self.multiplier = 1.;
             self.use_multiplier = false;
@@ -106,7 +106,8 @@ impl FilamentGridSave {
             pickers,
             num_filaments: grid.num_filaments,
             multiplier: grid.multiplier,
-            use_multiplier: grid.use_multiplier,
+            // use_multiplier: grid.use_multiplier,
+            use_multiplier: false,
             offset: grid.offset,
             use_offset: grid.use_offset,
         }
@@ -125,7 +126,8 @@ impl FilamentGridSave {
         }
         grid.num_filaments = self.num_filaments;
         grid.multiplier = self.multiplier;
-        grid.use_multiplier = self.use_multiplier;
+        // grid.use_multiplier = self.use_multiplier;
+        grid.use_multiplier = false;
         grid.offset = self.offset;
         grid.use_offset = self.use_offset;
     }
@@ -213,9 +215,11 @@ impl FilamentGrid {
         &mut self.current.multiplier
     }
 
+    /// XXX: disabled
     pub fn use_multiplier(&self) -> bool {
         // self.grids[self.current].use_multiplier
-        self.current.use_multiplier
+        // self.current.use_multiplier
+        false
     }
 
     pub fn use_multiplier_mut(&mut self) -> &mut bool {
@@ -348,9 +352,12 @@ impl App {
                                                     ) {
                                                         (true, true) => purge,
                                                         (true, false) => {
-                                                            (purge as f32
-                                                                * self.filament_grid.multiplier())
-                                                                as u32
+                                                            // (purge as f32
+                                                            //     * self.filament_grid.multiplier())
+                                                            //     as u32
+                                                            panic!(
+                                                                "purge multiplier not implemented"
+                                                            );
                                                         }
                                                         (false, true) => {
                                                             purge + self.filament_grid.offset()
@@ -405,14 +412,14 @@ impl App {
 
                 ui.separator();
 
-                /// multiplier and offset
-                ui.horizontal(|ui| {
-                    ui.checkbox(self.filament_grid.use_multiplier_mut(), "Use multiplier");
-                    let drag = egui::DragValue::new(self.filament_grid.multiplier_mut())
-                        .update_while_editing(false)
-                        .max_decimals(3);
-                    ui.add(drag);
-                });
+                // /// multiplier and offset
+                // ui.horizontal(|ui| {
+                //     ui.checkbox(self.filament_grid.use_multiplier_mut(), "Use multiplier");
+                //     let drag = egui::DragValue::new(self.filament_grid.multiplier_mut())
+                //         .update_while_editing(false)
+                //         .max_decimals(3);
+                //     ui.add(drag);
+                // });
                 ui.horizontal(|ui| {
                     ui.checkbox(self.filament_grid.use_offset_mut(), "Use offset");
                     let drag = egui::DragValue::new(self.filament_grid.offset_mut())
