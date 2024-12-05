@@ -15,7 +15,7 @@ env_logger = "0.11.5"
 # fuzzy-matcher = "0.3.7"
 hex_color = { version = "3.0.0", features = ["serde"] }
 rand = "0.8.5"
-rusqlite = { version = "0.32.1", features = ["bundled"] }
+rusqlite = { version = "0.32.1", features = ["bundled", "backup"] }
 serde = { version = "1.0.210", features = ["derive"] }
 ahash = "0.8.11"
 nucleo = "0.5.0"
@@ -38,6 +38,7 @@ tracing-subscriber = { version = "0.3.18", features = [
     "json",
     "registry",
 ] }
+rfd = "0.15.1"
 
 [dependencies.windows]
 version = "0.58.0"
