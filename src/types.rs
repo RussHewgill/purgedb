@@ -158,9 +158,15 @@ impl Filament {
         job
     }
 
-    pub fn colored_name(&self) -> LayoutJob {
+    pub fn colored_name(&self, ctx: &egui::Context) -> LayoutJob {
         // let mut job = LayoutJob::default();
         let mut job = self.colored_box_text(false);
+
+        let col = if ctx.style().visuals.dark_mode {
+            egui::Color32::WHITE
+        } else {
+            egui::Color32::BLACK
+        };
 
         job.append(
             &format!("{} {}", &self.manufacturer, &self.name),
@@ -168,7 +174,7 @@ impl Filament {
             2.0,
             egui::TextFormat {
                 // font_id: FontId::new(14.0, FontFamily::Proportional),
-                color: egui::Color32::BLACK,
+                color: col,
                 ..Default::default()
             },
         );

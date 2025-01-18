@@ -105,7 +105,7 @@ impl FilamentPicker {
                 .height(250.)
                 // response
                 .selected_text(match &self.selected {
-                    Some(f) => f.colored_name(),
+                    Some(f) => f.colored_name(ui.ctx()),
                     None => LayoutJob::default(),
                 })
                 .show_ui(ui, |ui| {
@@ -121,7 +121,7 @@ impl FilamentPicker {
                             ui.selectable_value(
                                 &mut self.selected,
                                 Some(f.1.clone()),
-                                f.1.colored_name(),
+                                f.1.colored_name(ui.ctx()),
                             );
                         }
                     } else {
@@ -129,7 +129,7 @@ impl FilamentPicker {
                             ui.selectable_value(
                                 &mut self.selected,
                                 Some(f.clone()),
-                                f.colored_name(),
+                                f.colored_name(ui.ctx()),
                             );
                         }
                     }

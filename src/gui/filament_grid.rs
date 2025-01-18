@@ -238,7 +238,7 @@ impl App {
             .outer_margin(5.)
             .inner_margin(5.)
             .show(ui, |ui| {
-                ui.visuals_mut().override_text_color = Some(egui::Color32::BLACK);
+                // ui.visuals_mut().override_text_color = Some(egui::Color32::BLACK);
                 ui.horizontal(|ui| {
                     if ui.button("Clear").clicked() {
                         for p in self.filament_grid.pickers_mut().iter_mut() {

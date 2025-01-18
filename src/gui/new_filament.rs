@@ -213,7 +213,7 @@ impl App {
                             ui.selectable_value(
                                 &mut self.new_filament.selected,
                                 Some(f.id),
-                                f.colored_name(),
+                                f.colored_name(ui.ctx()),
                             );
                         }
                     } else {
@@ -223,7 +223,7 @@ impl App {
                             ui.selectable_value(
                                 &mut self.new_filament.selected,
                                 Some(f.0),
-                                f.1.colored_name(),
+                                f.1.colored_name(ctx),
                             );
                         }
                     }

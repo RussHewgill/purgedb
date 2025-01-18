@@ -104,13 +104,18 @@ impl App {
                         }
                         ui.horizontal(|ui| {
                             ui.label("From ");
-                            ui.label(f1.colored_name());
+                            ui.label(f1.colored_name(ui.ctx()));
                             ui.label("To ");
-                            ui.label(f2.colored_name());
+                            ui.label(f2.colored_name(ui.ctx()));
                             match self.db.get_purge_values(f1.id, f2.id) {
                                 Ok(v) => {
                                     ui.visuals_mut().override_text_color =
-                                        Some(egui::Color32::BLACK);
+                                        if ui.ctx().style().visuals.dark_mode {
+                                            Some(egui::Color32::WHITE)
+                                        } else {
+                                            Some(egui::Color32::BLACK)
+                                        };
+                                    // Some(egui::Color32::BLACK);
                                     // ui.label(format!("Existing Value: {}", v));
                                     ui.label(format!("({})", v));
                                 }
@@ -123,13 +128,18 @@ impl App {
 
                         ui.horizontal(|ui| {
                             ui.label("From ");
-                            ui.label(f2.colored_name());
+                            ui.label(f2.colored_name(ui.ctx()));
                             ui.label("To ");
-                            ui.label(f1.colored_name());
+                            ui.label(f1.colored_name(ui.ctx()));
                             match self.db.get_purge_values(f2.id, f1.id) {
                                 Ok(v) => {
                                     ui.visuals_mut().override_text_color =
-                                        Some(egui::Color32::BLACK);
+                                        if ui.ctx().style().visuals.dark_mode {
+                                            Some(egui::Color32::WHITE)
+                                        } else {
+                                            Some(egui::Color32::BLACK)
+                                        };
+                                    // Some(egui::Color32::BLACK);
                                     // ui.label(format!("Existing Value: {}", v));
                                     ui.label(format!("({})", v));
                                 }
