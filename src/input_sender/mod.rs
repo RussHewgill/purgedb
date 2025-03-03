@@ -152,7 +152,11 @@ pub fn focus_first_input(num_filaments: usize) -> Result<()> {
     // }
 
     /// only works when Orca has 4 filaments
-    shift_tab(16)?;
+    // shift_tab(16)?;
+
+    /// 4 filaments
+    // tabs(9)?;
+    tabs(num_filaments + 5)?;
 
     Ok(())
 }
@@ -200,6 +204,14 @@ pub fn tab() -> Result<()> {
     let tab = 0x09;
     press_key(tab)?;
     std::thread::sleep(std::time::Duration::from_millis(DELAY));
+    Ok(())
+}
+
+pub fn tabs(n: usize) -> Result<()> {
+    let tab = 0x09;
+    for _ in 0..n {
+        press_key(tab)?;
+    }
     Ok(())
 }
 

@@ -517,10 +517,10 @@ impl App {
                     crate::input_sender::send_number(999, true)?;
                 }
             }
-            for _ in 0..4 - num_filaments {
-                // eprintln!("tab");
-                crate::input_sender::tab()?;
-            }
+            // for _ in 0..4 - num_filaments {
+            //     // eprintln!("tab");
+            //     crate::input_sender::tab()?;
+            // }
             // eprintln!("tab");
             crate::input_sender::tab()?;
         }
