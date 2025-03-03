@@ -35,6 +35,7 @@ pub struct FilamentGridData {
     pub use_multiplier: bool,
     pub offset: u32,
     pub use_offset: bool,
+    pub override_num_filaments: (bool, usize),
 }
 
 impl FilamentGridData {
@@ -149,6 +150,7 @@ impl Default for FilamentGridData {
             offset: 0,
             use_offset: false,
             // cells,
+            override_num_filaments: (true, 4),
         }
     }
 }
@@ -193,6 +195,14 @@ impl FilamentGrid {
     pub fn offset_mut(&mut self) -> &mut u32 {
         // &mut self.grids[self.current].offset
         &mut self.current.offset
+    }
+
+    pub fn override_num_filaments(&self) -> &(bool, usize) {
+        &self.current.override_num_filaments
+    }
+
+    pub fn override_num_filaments_mut(&mut self) -> &mut (bool, usize) {
+        &mut self.current.override_num_filaments
     }
 
     pub fn use_offset(&self) -> bool {
@@ -431,6 +441,21 @@ impl App {
                 ui.separator();
 
                 ui.horizontal(|ui| {
+                    ui.checkbox(
+                        &mut self.filament_grid.override_num_filaments_mut().0,
+                        "Override number of filaments",
+                    );
+                    let drag = egui::DragValue::new(
+                        &mut self.filament_grid.override_num_filaments_mut().1,
+                    )
+                    .update_while_editing(false)
+                    .max_decimals(0);
+                    ui.add(drag);
+                });
+
+                ui.separator();
+
+                ui.horizontal(|ui| {
                     'outer: for i in 0..self.filament_grid.grids.len() {
                         let b = ui.vertical(|ui| {
                             let mut b = false;
@@ -481,26 +506,53 @@ impl App {
         //   panic!("num_filaments TODO");
         // }
 
+        // let (override_num, num_filaments) = match self.filament_grid.override_num_filaments_mut() {
+        //     (true, n) => (true, *n),
+        //     (false, _) => (false, num_filaments),
+        // };
+
+        let (override_filaments, override_num) = *self.filament_grid.override_num_filaments();
+
         /// save history
         self.db.add_to_history(&self.filament_grid.current)?;
 
         // crate::input_sender::alt_tab()?;
-        crate::input_sender::focus_first_input(num_filaments)?;
+        if override_filaments {
+            crate::input_sender::focus_first_input(override_num)?;
+        } else {
+            crate::input_sender::focus_first_input(num_filaments)?;
+        }
         std::thread::sleep(std::time::Duration::from_millis(400));
         // eprintln!("alt-tab");
 
+        let n = if override_filaments {
+            override_num
+        } else {
+            num_filaments
+        };
+
         // #[cfg(feature = "nope")]
-        for from_id in 0..num_filaments {
+        for from_id in 0..n {
             let Some(from) = &self.filament_grid.pickers()[from_id].selected() else {
                 panic!("missing from");
             };
-            for to_id in 0..num_filaments {
+            // if override_filaments && from_id > override_num {
+            //     crate::input_sender::tab()?;
+            //     continue;
+            // }
+            for to_id in 0..n {
                 let Some(to) = &self.filament_grid.pickers()[to_id].selected() else {
                     panic!("missing to");
                 };
                 if from_id == to_id {
                     continue;
                 }
+
+                if override_filaments && to_id > num_filaments - 1 {
+                    crate::input_sender::tab()?;
+                    continue;
+                }
+
                 if let Ok(p) = self.db.get_purge_values(from.id, to.id) {
                     let purge = match (
                         self.filament_grid.use_multiplier(),

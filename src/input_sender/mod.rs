@@ -122,6 +122,7 @@ pub fn focus_first_input(num_filaments: usize) -> Result<()> {
 
         // eprintln!("FOUND_HWND = {:?}", FOUND_HWND);
 
+        #[allow(static_mut_refs)]
         if !FOUND_HWND.is_invalid() {
             // eprintln!("setting focus");
 
