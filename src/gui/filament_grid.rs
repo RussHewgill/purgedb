@@ -532,11 +532,11 @@ impl App {
         };
 
         // #[cfg(feature = "nope")]
-        for from_id in 0..n {
+        for from_id in 0..num_filaments {
             let Some(from) = &self.filament_grid.pickers()[from_id].selected() else {
                 panic!("missing from");
             };
-            // if override_filaments && from_id > override_num {
+            // if override_filaments && from_id > num_filaments - 1 {
             //     crate::input_sender::tab()?;
             //     continue;
             // }
