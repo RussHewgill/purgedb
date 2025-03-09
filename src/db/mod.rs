@@ -334,6 +334,62 @@ impl Db {
         )
     }
 
+    pub fn get_all_purge_for_filament(&self, id: u32) -> Result<Vec<(u32, (u32, u32))>> {
+        let mut stmt1 = self.db.prepare(
+            "SELECT id_from, id_to, purge 
+            FROM purge_values 
+            WHERE id_from = ?1",
+        )?;
+
+        let froms = stmt1.query_map([id], |row| {
+            let id_from: u32 = row.get(0)?;
+            let id_to: u32 = row.get(1)?;
+            let purge: u32 = row.get(2)?;
+
+            assert_eq!(id_from, id);
+
+            Ok((id_from, id_to, purge))
+        });
+
+        /// to_id, purge
+        let froms: Vec<(u32, u32)> = froms?
+            .flatten()
+            .map(|(_, to_id, p)| (to_id, p))
+            .collect::<Vec<_>>();
+
+        let tos = froms
+            .iter()
+            .flat_map(|(id_to, _)| self.get_purge_values(*id_to, id).map(|p| (*id_to, p)))
+            .collect::<HashMap<_, _>>();
+
+        let mut out = Vec::new();
+
+        for (to_id, p_to) in froms.iter() {
+            let p_from = tos.get(to_id).copied().unwrap_or(999);
+
+            out.push((*to_id, (*p_to, p_from)));
+        }
+
+        // let mut stmt2 = self.db.prepare(
+        //     "SELECT id_from, id_to, purge
+        //     FROM purge_values
+        //     WHERE id_to = ?1",
+        // )?;
+
+        // let tos = stmt2.query_map([id], |row| {
+        //     let id_from: u32 = row.get(0)?;
+        //     let id_to: u32 = row.get(1)?;
+        //     let purge: u32 = row.get(2)?;
+
+        //     assert_eq!(id_to, id);
+
+        //     Ok((id_from, id_to, purge))
+        // });
+
+        // Ok(froms?.chain(tos?).flatten().collect())
+        Ok(out)
+    }
+
     pub fn new() -> Result<Self> {
         let path = "test.db";
 

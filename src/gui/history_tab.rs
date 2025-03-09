@@ -24,7 +24,7 @@ pub struct HistoryRow {
 
 impl App {
     pub fn show_history_tab(&mut self, ui: &mut egui::Ui) {
-        let history = self.db.fetch_history(self.history_sort).unwrap();
+        let history = self.db.fetch_history(self.list_sort).unwrap();
         let (filament_map, filaments) = self.db.get_all_filaments().unwrap();
 
         // debug!("history.len() = {}", history.len());
@@ -46,12 +46,12 @@ impl App {
             .header(35., |mut header| {
                 header.col(|ui| {
                     if ui.heading("Timestamp").clicked() {
-                        match self.history_sort {
+                        match self.list_sort {
                             Some((0, SortOrder::Ascending)) => {
-                                self.history_sort = Some((0, SortOrder::Descending));
+                                self.list_sort = Some((0, SortOrder::Descending));
                             }
                             _ => {
-                                self.history_sort = Some((0, SortOrder::Ascending));
+                                self.list_sort = Some((0, SortOrder::Ascending));
                             }
                         }
                     }

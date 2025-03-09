@@ -6,6 +6,7 @@ pub mod filament_picker;
 // pub mod edit_filament;
 // pub mod dropdown;
 pub mod history_tab;
+pub mod list_calibrations;
 pub mod new_filament;
 pub mod options;
 pub mod text_val;
@@ -22,6 +23,7 @@ pub enum Tab {
     // EditFilament,
     FilamentGrid,
     History,
+    CalibrationList,
     Options,
 }
 
@@ -45,9 +47,10 @@ pub struct App {
     // get_purge: GetPurge,
     enter_purge: EnterPurge,
     filament_grid: FilamentGrid,
+    calibration_list: list_calibrations::ListCalibrations,
 
     #[serde(skip)]
-    pub history_sort: Option<(usize, history_tab::SortOrder)>,
+    pub list_sort: Option<(usize, history_tab::SortOrder)>,
 
     pub history_hide_duplicates: bool,
 
@@ -97,8 +100,9 @@ impl Default for App {
             // get_purge: GetPurge::default(),
             enter_purge: EnterPurge::default(),
             filament_grid: FilamentGrid::default(),
+            calibration_list: list_calibrations::ListCalibrations::default(),
 
-            history_sort: None,
+            list_sort: None,
             // history_sort: Some((0, history_tab::SortOrder::Descending)),
             history_hide_duplicates: true,
 
@@ -131,7 +135,7 @@ impl App {
             Default::default()
         };
 
-        out.history_sort = Some((0, history_tab::SortOrder::Descending));
+        out.list_sort = Some((0, history_tab::SortOrder::Descending));
 
         let filter = nucleo::Nucleo::new(
             nucleo::Config::DEFAULT,
@@ -204,6 +208,11 @@ impl eframe::App for App {
                 );
                 ui.selectable_value(&mut self.current_tab, Tab::FilamentGrid, "Filament Grid");
                 ui.selectable_value(&mut self.current_tab, Tab::History, "History");
+                ui.selectable_value(
+                    &mut self.current_tab,
+                    Tab::CalibrationList,
+                    "Calibration List",
+                );
                 ui.selectable_value(&mut self.current_tab, Tab::Options, "Options");
             });
             // ui.separator();
@@ -283,6 +292,9 @@ impl eframe::App for App {
             // Tab::EditFilament => self.show_edit_filament(ui),
             Tab::FilamentGrid => {
                 egui::CentralPanel::default().show(ctx, |ui| self.show_filament_grid(ui));
+            }
+            Tab::CalibrationList => {
+                egui::CentralPanel::default().show(ctx, |ui| self.show_calibration_list(ui));
             }
             Tab::History => {
                 egui::CentralPanel::default().show(ctx, |ui| self.show_history_tab(ui));
