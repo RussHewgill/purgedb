@@ -161,6 +161,11 @@ impl App {
                                     (false, true) => p - self.filament_grid.offset(),
                                     (false, false) => p,
                                 };
+                                // let p = if self.filament_grid.use_offset() {
+                                //     p - self.filament_grid.offset()
+                                // } else {
+                                //     p
+                                // };
                                 self.db.set_purge_values(f1.id, f2.id, p).unwrap();
                             }
                             if let Ok(p) = self.enter_purge.purge2.parse::<u32>() {

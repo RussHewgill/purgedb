@@ -12,6 +12,34 @@ impl App {
                 error!("Error exporting settings: {:?}", e);
             }
         }
+
+        ui.separator();
+
+        ui.horizontal(|ui| {
+            ui.label("Database Path:");
+            ui.label(self.db_path.display().to_string());
+        });
+
+        if ui
+            .button("Choose database file (restart required)")
+            .clicked()
+        {
+            let mut picker = rfd::FileDialog::new();
+            if let Some(path) = picker.pick_file() {
+                self.db_path = path;
+                self.reload_db();
+            }
+        }
+
+        // if ui
+        //     .button("Create new database file (restart required):")
+        //     .clicked()
+        // {
+        //     let mut picker = rfd::FileDialog::new();
+        //     if let Some(path) = picker.save_file() {
+        //         self.db_path = path;
+        //     }
+        // }
     }
 }
 
@@ -27,7 +55,7 @@ impl App {
 
             let mut output_db = rusqlite::Connection::open(path)?;
 
-            rusqlite::backup::Backup::new(&self.db.db, &mut output_db)
+            rusqlite::backup::Backup::new(self.db.get_db(), &mut output_db)
                 .context("Error creating backup")?
                 .run_to_completion(5, std::time::Duration::from_millis(250), None)
                 .context("Error running backup")?;

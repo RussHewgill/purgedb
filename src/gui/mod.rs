@@ -42,6 +42,8 @@ pub struct App {
     db: Db,
     current_tab: Tab,
 
+    db_path: std::path::PathBuf,
+
     new_filament: NewFilament,
     // edit_filament: EditFilament,
     // get_purge: GetPurge,
@@ -77,7 +79,8 @@ pub struct App {
 
 impl Default for App {
     fn default() -> Self {
-        let db = Db::new().unwrap();
+        let db_path = std::path::PathBuf::from("test.db");
+        let db = Db::new(&db_path).unwrap();
         // db.test_filaments().unwrap();
 
         // let filter = nucleo::Nucleo::new(
@@ -94,6 +97,8 @@ impl Default for App {
         Self {
             db,
             current_tab: Tab::default(),
+
+            db_path,
 
             new_filament: NewFilament::default(),
             // edit_filament: EditFilament::default(),
@@ -151,6 +156,8 @@ impl App {
         out.nucleo = Some(filter);
         out.injector = Some(injector);
 
+        out.reload_db();
+
         out
     }
 
@@ -174,6 +181,11 @@ impl App {
         }
 
         self.updated_filaments = true;
+    }
+
+    pub fn reload_db(&mut self) {
+        // eprintln!("Reloading database");
+        self.db.reload(&self.db_path).unwrap();
     }
 }
 

@@ -13,7 +13,7 @@ const CACHE_DURATION: std::time::Duration = std::time::Duration::from_secs(30);
 
 pub struct Db {
     // db: Connection,
-    pub db: Connection,
+    db: Option<Connection>,
 
     cache_filaments: (FilamentMap, Vec<(u32, Filament)>),
     last_updated_filament: std::time::Instant,
@@ -25,9 +25,11 @@ pub struct Db {
     stale_history: bool,
 }
 
+/// This is needed for serde, but shouldn't be actually called?
 impl Default for Db {
     fn default() -> Self {
-        let db = Self::new().unwrap();
+        let db_path = std::path::PathBuf::from("test.db");
+        let db = Self::new(db_path).unwrap();
         // db.test_filaments().unwrap();
         db
     }
@@ -48,7 +50,7 @@ impl Db {
 
         eprintln!("get_filament");
 
-        self.db.query_row(
+        self.db.as_ref().unwrap().query_row(
             "SELECT 
         id, 
         name, 
@@ -103,7 +105,7 @@ impl Db {
 
         eprintln!("get_all_filaments");
 
-        let mut stmt = self.db.prepare(
+        let mut stmt = self.db.as_ref().unwrap().prepare(
             "SELECT 
         id, 
         name, 
@@ -173,7 +175,11 @@ impl Db {
     }
 
     pub fn get_all_names(&self) -> Result<Vec<(u32, String)>> {
-        let mut stmt = self.db.prepare("SELECT id, name FROM filaments")?;
+        let mut stmt = self
+            .db
+            .as_ref()
+            .unwrap()
+            .prepare("SELECT id, name FROM filaments")?;
         let names_iter = stmt.query_map([], |row| {
             let id: u32 = row.get(0)?;
             let name: String = row.get(1)?;
@@ -183,7 +189,11 @@ impl Db {
     }
 
     fn get_all_colors(&self) -> Result<Vec<(u32, String)>> {
-        let mut stmt = self.db.prepare("SELECT id, color FROM filaments")?;
+        let mut stmt = self
+            .db
+            .as_ref()
+            .unwrap()
+            .prepare("SELECT id, color FROM filaments")?;
         let colors_iter = stmt.query_map([], |row| {
             let id: u32 = row.get(0)?;
             let color: String = row.get(3)?;
@@ -233,7 +243,7 @@ impl Db {
 /// new, modify filament
 impl Db {
     pub fn delete_filament(&mut self, id: u32) -> Result<()> {
-        match self.db.execute(
+        match self.db.as_ref().unwrap().execute(
             "DELETE FROM filaments WHERE id = ?1",
             [id],
             //
@@ -272,7 +282,7 @@ impl Db {
 
         if let Some(id) = id {
             eprintln!("updating filament");
-            match self.db.execute(
+            match self.db.as_ref().unwrap().execute(
         "INSERT OR REPLACE INTO filaments (id, name, manufacturer, color1, color2, color3, material, notes) 
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         (
@@ -291,7 +301,7 @@ impl Db {
         // Err(e) => {}
       }
         } else {
-            match self.db.execute(
+            match self.db.as_ref().unwrap().execute(
         "INSERT INTO filaments (name, manufacturer, color1, color2, color3, material, notes) 
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         (
@@ -315,7 +325,7 @@ impl Db {
     }
 
     pub fn set_purge_values(&mut self, id_from: u32, id_to: u32, purge: u32) -> Result<()> {
-        match self.db.execute(
+        match self.db.as_ref().unwrap().execute(
             "INSERT OR REPLACE INTO purge_values (id_from, id_to, purge) VALUES (?1, ?2, ?3)",
             (id_from, id_to, purge),
         ) {
@@ -327,7 +337,7 @@ impl Db {
     }
 
     pub fn get_purge_values(&self, id_from: u32, id_to: u32) -> Result<u32> {
-        self.db.query_row(
+        self.db.as_ref().unwrap().query_row(
             "SELECT purge FROM purge_values WHERE id_from=?1 AND id_to=?2",
             (id_from, id_to),
             |row| row.get(0),
@@ -335,7 +345,7 @@ impl Db {
     }
 
     pub fn get_all_purge_for_filament(&self, id: u32) -> Result<Vec<(u32, (u32, u32))>> {
-        let mut stmt1 = self.db.prepare(
+        let mut stmt1 = self.db.as_ref().unwrap().prepare(
             "SELECT id_from, id_to, purge 
             FROM purge_values 
             WHERE id_from = ?1",
@@ -390,8 +400,41 @@ impl Db {
         Ok(out)
     }
 
-    pub fn new() -> Result<Self> {
-        let path = "test.db";
+    pub fn reload<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
+        let db = self.db.take().unwrap();
+        if let Err(e) = db.close() {
+            eprintln!("Error closing db: {:?}", e);
+        };
+
+        let conn = Self::_new(path)?;
+
+        self.db = Some(conn);
+
+        Ok(())
+    }
+
+    pub fn get_db(&self) -> &Connection {
+        self.db.as_ref().unwrap()
+    }
+
+    pub fn new<P: AsRef<std::path::Path>>(path: P) -> Result<Self> {
+        let conn = Self::_new(path)?;
+
+        Ok(Self {
+            db: Some(conn),
+            cache_filaments: (FilamentMap::new(HashMap::new()), vec![]),
+            last_updated_filament: std::time::Instant::now(),
+            stale_filament: true,
+
+            cache_history: vec![],
+            cache_history_sort: None,
+            last_updated_history: std::time::Instant::now(),
+            stale_history: true,
+        })
+    }
+
+    fn _new<P: AsRef<std::path::Path>>(path: P) -> Result<Connection> {
+        // let path = "test.db";
 
         let conn = Connection::open(path)?;
 
@@ -424,16 +467,6 @@ impl Db {
 
         Self::init_history(&conn)?;
 
-        Ok(Self {
-            db: conn,
-            cache_filaments: (FilamentMap::new(HashMap::new()), vec![]),
-            last_updated_filament: std::time::Instant::now(),
-            stale_filament: true,
-
-            cache_history: vec![],
-            cache_history_sort: None,
-            last_updated_history: std::time::Instant::now(),
-            stale_history: true,
-        })
+        Ok(conn)
     }
 }

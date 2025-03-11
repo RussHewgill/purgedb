@@ -50,7 +50,7 @@ impl Db {
 
         // let ps = params![]
 
-        match self.db.execute(
+        match self.db.as_ref().unwrap().execute(
             "INSERT INTO send_history (timestamp, num_slots, slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9, slot10, slot11, slot12, slot13, slot14, slot15, slot16, multiplier, offset) 
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)",
             //  #[cfg(feature = "nope")]
@@ -106,6 +106,8 @@ impl Db {
 
     pub fn remove_history(&mut self, id: u32) -> Result<()> {
         self.db
+            .as_ref()
+            .unwrap()
             .execute("DELETE FROM send_history WHERE id = ?1", params![id])?;
         self.stale_history = true;
         Ok(())
@@ -170,7 +172,7 @@ impl Db {
             }
         }
 
-        let mut stmt = self.db.prepare(&stmt)?;
+        let mut stmt = self.db.as_ref().unwrap().prepare(&stmt)?;
 
         let iter = stmt.query_map([], |row| {
             let id = match row.get(0) {
