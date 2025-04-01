@@ -1,4 +1,4 @@
-use super::{filament_picker::FilamentPicker, App};
+use super::{App, filament_picker::FilamentPicker};
 use crate::types::Filament;
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -24,7 +24,7 @@ impl EnterPurge {
 
 impl App {
     pub fn show_enter_purge(&mut self, ui: &mut egui::Ui) {
-        egui::Frame::none()
+        egui::Frame::new()
             // .stroke(Stroke::new(1.0, egui::Color32::from_gray(65)))
             // .outer_margin(5.)
             // .inner_margin(5.)

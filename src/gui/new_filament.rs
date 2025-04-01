@@ -4,7 +4,7 @@ use hex_color::HexColor;
 
 use crate::types::Material;
 
-use super::{filament_picker::FilamentPicker, text_val::ValText, App};
+use super::{App, filament_picker::FilamentPicker, text_val::ValText};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct NewFilament {
@@ -137,7 +137,7 @@ impl App {
                 //     }
                 //   });
 
-                egui::Frame::none().show(ui, |ui| {
+                egui::Frame::new().show(ui, |ui| {
                     ui.horizontal(|ui| {
                         if ui.button("Load Filament").clicked() {
                             if let Some(id) = &self.new_filament.selected {
@@ -295,7 +295,7 @@ impl App {
                 .striped(false)
                 .show(ui, |ui| {
                     ui.label("Row ID (blank for new filament): ");
-                    egui::Frame::none().show(ui, |ui| {
+                    egui::Frame::new().show(ui, |ui| {
                         if let Some(id) = self.new_filament.row_id {
                             ui.label(format!("{}", id));
                             if ui.button("clear id").clicked() {
@@ -325,7 +325,7 @@ impl App {
                     }
                     ui.end_row();
 
-                    egui::Frame::none().show(ui, |ui| {
+                    egui::Frame::new().show(ui, |ui| {
                         ui.label("Color 1: ");
                         color_edit_button(
                             ui,
@@ -336,7 +336,7 @@ impl App {
                     ui.end_row();
 
                     for (i, c) in self.new_filament.colors.iter_mut().enumerate() {
-                        egui::Frame::none().show(ui, |ui| {
+                        egui::Frame::new().show(ui, |ui| {
                             ui.label(format!("Color {}: ", i + 2));
                             color_edit_button(ui, &mut c.0, &mut c.1);
                         });

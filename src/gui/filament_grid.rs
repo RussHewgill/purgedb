@@ -4,7 +4,7 @@ use egui_extras::{Column, TableBuilder};
 
 use crate::types::{Filament, FilamentMap};
 
-use super::{filament_picker::FilamentPicker, history_tab::HistoryRow, text_val::ValText, App};
+use super::{App, filament_picker::FilamentPicker, history_tab::HistoryRow, text_val::ValText};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct FilamentGrid {
@@ -244,7 +244,7 @@ impl App {
         // let keywords = self.db.get_all_searchable_keywords().unwrap();
         self.update_filtered_filaments(&filaments.0);
 
-        egui::Frame::none()
+        egui::Frame::new()
             .outer_margin(5.)
             .inner_margin(5.)
             .show(ui, |ui| {
@@ -341,7 +341,7 @@ impl App {
                                 {
                                     row.col(|ui| {
                                         if from_id == to_id {
-                                            egui::Frame::none()
+                                            egui::Frame::new()
                                                 .fill(egui::Color32::from_gray(32))
                                                 .show(ui, |ui| {
                                                     ui.allocate_space(ui.available_size());
@@ -413,12 +413,25 @@ impl App {
                         }
                     });
 
-                #[cfg(target_os = "windows")]
-                if ui.button("send to orca").clicked() {
-                    if let Err(e) = self.send_purge_values(self.filament_grid.num_filaments()) {
-                        eprintln!("send_purge_values error: {:?}", e);
+                ui.horizontal(|ui| {
+                    #[cfg(target_os = "windows")]
+                    if ui.button("Send to Orca").clicked() {
+                        if let Err(e) =
+                            self.send_purge_values(self.filament_grid.num_filaments(), true)
+                        {
+                            eprintln!("send_purge_values error: {:?}", e);
+                        }
                     }
-                }
+
+                    #[cfg(target_os = "windows")]
+                    if ui.button("Send to Bambu Studio").clicked() {
+                        if let Err(e) =
+                            self.send_purge_values(self.filament_grid.num_filaments(), false)
+                        {
+                            eprintln!("send_purge_values error: {:?}", e);
+                        }
+                    }
+                });
 
                 ui.separator();
 
@@ -501,7 +514,7 @@ impl App {
     }
 
     #[cfg(target_os = "windows")]
-    fn send_purge_values(&mut self, num_filaments: usize) -> anyhow::Result<()> {
+    fn send_purge_values(&mut self, num_filaments: usize, orca: bool) -> anyhow::Result<()> {
         // if num_filaments != 4 {
         //   panic!("num_filaments TODO");
         // }

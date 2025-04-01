@@ -4,7 +4,7 @@ use egui_extras::{Column, TableBuilder};
 
 use crate::types::{Filament, FilamentMap};
 
-use super::{filament_picker::FilamentPicker, history_tab::SortOrder, App};
+use super::{App, filament_picker::FilamentPicker, history_tab::SortOrder};
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct ListCalibrations {
@@ -16,7 +16,7 @@ pub struct ListCalibrations {
 
 impl App {
     pub fn show_calibration_list(&mut self, ui: &mut egui::Ui) {
-        egui::Frame::none().show(ui, |ui| {
+        egui::Frame::new().show(ui, |ui| {
             let filaments = self.db.get_all_filaments().unwrap();
             self.update_filtered_filaments(&filaments.0);
 
@@ -146,16 +146,16 @@ impl App {
                             });
                         }
                         Some((1, SortOrder::Ascending)) => {
-                            table.sort_by(|a, b| a.1 .0.cmp(&b.1 .0));
+                            table.sort_by(|a, b| a.1.0.cmp(&b.1.0));
                         }
                         Some((1, SortOrder::Descending)) => {
-                            table.sort_by(|a, b| b.1 .0.cmp(&a.1 .0));
+                            table.sort_by(|a, b| b.1.0.cmp(&a.1.0));
                         }
                         Some((2, SortOrder::Ascending)) => {
-                            table.sort_by(|a, b| a.1 .1.cmp(&b.1 .1));
+                            table.sort_by(|a, b| a.1.1.cmp(&b.1.1));
                         }
                         Some((2, SortOrder::Descending)) => {
-                            table.sort_by(|a, b| b.1 .1.cmp(&a.1 .1));
+                            table.sort_by(|a, b| b.1.1.cmp(&a.1.1));
                         }
                         _ => {
                             //

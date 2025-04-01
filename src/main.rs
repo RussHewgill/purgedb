@@ -16,7 +16,7 @@ mod types;
 mod input_sender;
 pub mod logging;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use tracing::{debug, error, info, trace, warn};
 
 #[cfg(feature = "nope")]
@@ -187,7 +187,15 @@ fn main() -> anyhow::Result<()> {
 }
 
 // #[cfg(feature = "nope")]
-fn main() -> eframe::Result<()> {
+fn main() -> anyhow::Result<()> {
+    input_sender::test_bs().unwrap();
+
+    Ok(())
+}
+
+/// main app
+// #[cfg(feature = "nope")]
+fn _main() -> eframe::Result<()> {
     use gui::App;
 
     // env_logger::init();

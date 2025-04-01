@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use egui::{
-    text::{LayoutJob, TextWrapping},
     Rect, RichText,
+    text::{LayoutJob, TextWrapping},
 };
 use hex_color::HexColor;
 
@@ -223,7 +223,12 @@ impl Filament {
             }
             n => eprintln!("unexpected number of colors: {}", n),
         }
-        painter.rect_stroke(rect, 0., (1., egui::Color32::BLACK));
+        painter.rect_stroke(
+            rect,
+            0.,
+            (1., egui::Color32::BLACK),
+            egui::StrokeKind::Middle,
+        );
 
         response
     }
