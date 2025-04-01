@@ -515,6 +515,52 @@ impl App {
 
     #[cfg(target_os = "windows")]
     fn send_purge_values(&mut self, num_filaments: usize, orca: bool) -> anyhow::Result<()> {
+        /// save history
+        self.db.add_to_history(&self.filament_grid.current)?;
+
+        let mut purge_vals = vec![];
+
+        for from_id in 0..num_filaments {
+            let Some(from) = &self.filament_grid.pickers()[from_id].selected() else {
+                panic!("missing from");
+            };
+            for to_id in 0..num_filaments {
+                let Some(to) = &self.filament_grid.pickers()[to_id].selected() else {
+                    panic!("missing to");
+                };
+                if from_id == to_id {
+                    continue;
+                }
+
+                if let Ok(p) = self.db.get_purge_values(from.id, to.id) {
+                    let purge = match (
+                        self.filament_grid.use_multiplier(),
+                        self.filament_grid.use_offset(),
+                    ) {
+                        (true, true) => p,
+                        (true, false) => (p as f32 * self.filament_grid.multiplier()) as u32,
+                        (false, true) => p + self.filament_grid.offset(),
+                        (false, false) => p,
+                    };
+                    purge_vals.push(purge);
+                } else {
+                    purge_vals.push(999);
+                }
+            }
+        }
+
+        if orca {
+            crate::input_sender::automation::send_purge_values_orca(&purge_vals)?;
+        } else {
+            crate::input_sender::automation::send_purge_values_bambu(&purge_vals, true)?;
+        }
+
+        Ok(())
+    }
+
+    #[cfg(target_os = "windows")]
+    #[cfg(feature = "nope")]
+    fn send_purge_values(&mut self, num_filaments: usize, orca: bool) -> anyhow::Result<()> {
         // if num_filaments != 4 {
         //   panic!("num_filaments TODO");
         // }

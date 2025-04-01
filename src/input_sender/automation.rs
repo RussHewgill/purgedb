@@ -64,8 +64,22 @@ pub fn get_num_filaments() -> Result<usize> {
     Ok(cs.len() - 1)
 }
 
+fn new_automation() -> Result<UIAutomation> {
+    let automation = {
+        match UIAutomation::new() {
+            Ok(a) => a,
+            Err(e) => {
+                // eprintln!("Error creating UIAutomation: {}", e);
+                // return Err(anyhow!("Failed to create UIAutomation"));
+                UIAutomation::new_direct().context("Failed to create UIAutomation")?
+            }
+        }
+    };
+    Ok(automation)
+}
+
 pub fn send_purge_values_orca(vals: &[u32]) -> Result<()> {
-    let automation = UIAutomation::new().unwrap();
+    let automation = new_automation()?;
     let w = find_purge_window_orca(&automation)?;
 
     // eprintln!("w: {:?}", w);
@@ -101,7 +115,8 @@ fn _send_purge_values_orca(automation: &UIAutomation, w: &UIElement, vals: &[u32
     let mut val_index = 0;
 
     for row in 0..ideal_grid_size {
-        for col in (0..ideal_grid_size).rev() {
+        // for col in (0..ideal_grid_size).rev()
+        for col in 0..ideal_grid_size {
             let index = get_cell_index(grid_size, row, ideal_grid_size - col);
 
             let p = cs[index].get_pattern::<UIValuePattern>()?;
@@ -126,7 +141,7 @@ fn _send_purge_values_orca(automation: &UIAutomation, w: &UIElement, vals: &[u32
 }
 
 pub fn send_purge_values_bambu(vals: &[u32], both: bool) -> Result<()> {
-    let automation = UIAutomation::new().unwrap();
+    let automation = new_automation()?;
     let w = find_purge_window_bambu(&automation)?;
 
     if both {
@@ -137,7 +152,6 @@ pub fn send_purge_values_bambu(vals: &[u32], both: bool) -> Result<()> {
 
     if both {
         set_extruder(&automation, &w, Extruder::Right)?;
-
         _send_purge_values_bambu(&automation, &w, vals)?;
     }
 
@@ -152,6 +166,13 @@ fn _send_purge_values_bambu(automation: &UIAutomation, w: &UIElement, vals: &[u3
     )?;
 
     let cs = w.find_all(uiautomation::types::TreeScope::Descendants, &p)?;
+
+    /// set multiplier to 1.0
+    {
+        let c = cs[cs.len() - 1].clone();
+        let p = c.get_pattern::<UIValuePattern>()?;
+        p.set_value(&format!("{}", 1.0))?;
+    }
 
     let num_cells = cs.len() - 1;
     eprintln!("cs.len() = {}", num_cells);
@@ -285,72 +306,44 @@ fn find_purge_window_orca(automation: &UIAutomation) -> Result<UIElement> {
 fn find_purge_window_bambu(automation: &UIAutomation) -> Result<UIElement> {
     let root = automation.get_root_element().unwrap();
 
-    eprintln!("Finding BambuStudio window");
-    let ws = automation
+    let walker = automation.create_tree_walker()?;
+
+    let mut bambu_window = automation
         .create_matcher()
         .from(root)
         .timeout(300)
         .depth(2)
         .contains_name("BambuStudio")
-        // .find_all()?;
         .find_first()?;
 
-    // eprintln!("ws: {:?}", ws.len());
+    eprintln!("bambu_window: {:?}", bambu_window);
 
-    // let w = &ws[0];
-
-    // eprintln!("id = {}", w.get_automation_id()?);
-    // eprintln!("process_id = {}", w.get_process_id()?);
-    // eprintln!("name = {}", w.get_name()?);
-    // eprintln!("class = {}", w.get_classname()?);
-
-    let Ok(ws) = automation
-        .create_matcher()
-        .from(ws.clone())
-        .timeout(1000)
-        .depth(2)
-        .name("Flushing volumes for filament change")
-        .find_all()
-    else {
-        bail!("Could not find purge window");
-    };
-
-    if ws.len() == 0 {
-        // continue;
-        bail!("Could not find purge window");
-    } else if ws.len() == 1 {
-        return Ok(ws[0].clone());
-    } else {
-        eprintln!("Found multiple windows?");
-        return Ok(ws[0].clone());
-    }
-
-    #[cfg(feature = "nope")]
-    for bs in ws.iter() {
+    // #[cfg(feature = "nope")]
+    loop {
         let Ok(ws) = automation
             .create_matcher()
-            .from(bs.clone())
-            .timeout(1000)
+            .from(bambu_window.clone())
+            .timeout(100)
             .depth(2)
             .name("Flushing volumes for filament change")
+            .classname("#32770")
             .find_all()
         else {
+            eprintln!("Finding next Bambu window");
+            let mut w = bambu_window.clone();
+            bambu_window = 'inner: loop {
+                w = walker.get_next_sibling(&w)?;
+                if w.get_name()?.contains("BambuStudio") {
+                    break 'inner w;
+                }
+            };
+
             continue;
+            // bail!("Could not find purge window");
         };
 
-        if ws.len() == 0 {
-            continue;
-        } else if ws.len() == 1 {
-            return Ok(ws[0].clone());
-        } else {
-            panic!("Found multiple windows?");
-        }
+        eprintln!("ws.len() = {}", ws.len());
+        // break 'outer;
+        return Ok(ws[0].clone());
     }
-
-    // let w = matcher
-    //     .match_name("Flushing volumes for filament change")
-    //     .find_first()?;
-
-    // Ok(w)
-    // bail!("Could not find purge window")
 }

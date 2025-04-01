@@ -42,8 +42,8 @@ pub fn test_bs() -> Result<()> {
         // 5, 4,
     ];
 
-    // automation::send_purge_values_bambu(&purge_values, false)?;
-    automation::send_purge_values_orca(&purge_values)?;
+    automation::send_purge_values_bambu(&purge_values, false)?;
+    // automation::send_purge_values_orca(&purge_values)?;
 
     // automation::swap_extruder()?;
 
