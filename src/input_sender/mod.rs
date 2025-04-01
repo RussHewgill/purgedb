@@ -22,8 +22,28 @@ pub fn test_bs() -> Result<()> {
     // let n = automation::get_num_filaments()?;
     // eprintln!("n = {:?}", n);
 
-    let purge_values = vec![011, 012, 013, 021, 022, 023, 031, 032, 033, 041, 042, 043];
-    automation::send_purge_values(&purge_values)?;
+    // automation::open_purge_window_bambu()?;
+
+    // let purge_values = vec![011, 012, 013, 021, 022, 023, 031, 032, 033, 041, 042, 043];
+
+    // let purge_values = vec![012, 013, 021, 023, 031, 032];
+
+    #[rustfmt::skip]
+    let purge_values = vec![
+        // 910, 920,
+        // 901, 921, 
+        // 902, 912,
+        0, 1,
+        2, 3,
+        4, 5
+
+        // 1, 0, 
+        // 3, 2, 
+        // 5, 4,
+    ];
+
+    // automation::send_purge_values_bambu(&purge_values, false)?;
+    automation::send_purge_values_orca(&purge_values)?;
 
     // automation::swap_extruder()?;
 

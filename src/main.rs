@@ -194,8 +194,8 @@ fn main() -> anyhow::Result<()> {
 }
 
 /// main app
-// #[cfg(feature = "nope")]
-fn _main() -> eframe::Result<()> {
+#[cfg(feature = "nope")]
+fn main() -> eframe::Result<()> {
     use gui::App;
 
     // env_logger::init();
