@@ -39,6 +39,8 @@ tracing-subscriber = { version = "0.3.19", features = [
     "registry",
 ] }
 rfd = "0.15.3"
+
+[target.'cfg(windows)'.dependencies]
 uiautomation = "0.17.3"
 
 [dependencies.windows]

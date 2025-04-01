@@ -453,20 +453,20 @@ impl App {
 
                 ui.separator();
 
-                ui.horizontal(|ui| {
-                    ui.checkbox(
-                        &mut self.filament_grid.override_num_filaments_mut().0,
-                        "Override number of filaments",
-                    );
-                    let drag = egui::DragValue::new(
-                        &mut self.filament_grid.override_num_filaments_mut().1,
-                    )
-                    .update_while_editing(false)
-                    .max_decimals(0);
-                    ui.add(drag);
-                });
+                // ui.horizontal(|ui| {
+                //     ui.checkbox(
+                //         &mut self.filament_grid.override_num_filaments_mut().0,
+                //         "Override number of filaments",
+                //     );
+                //     let drag = egui::DragValue::new(
+                //         &mut self.filament_grid.override_num_filaments_mut().1,
+                //     )
+                //     .update_while_editing(false)
+                //     .max_decimals(0);
+                //     ui.add(drag);
+                // });
 
-                ui.separator();
+                // ui.separator();
 
                 ui.horizontal(|ui| {
                     'outer: for i in 0..self.filament_grid.grids.len() {
