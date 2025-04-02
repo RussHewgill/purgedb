@@ -109,39 +109,24 @@ fn _send_purge_values_orca(automation: &UIAutomation, w: &UIElement, vals: &[u32
     let grid_size = (num_cells as f64).sqrt() as usize;
     let ideal_grid_size = (vals.len() as f64).sqrt() as usize + 1;
 
-    // eprintln!("grid_size = {}", grid_size);
-    // eprintln!("ideal_grid_size = {}", ideal_grid_size);
+    #[cfg(feature = "nope")]
+    {
+        let multiplier = cs[cs.len() - 1].clone();
+        let p = multiplier.get_pattern::<UIValuePattern>()?;
+        p.set_value("1.0")?;
+    }
 
-    let mut vals = vals.to_vec();
-    vals.chunks_exact_mut(ideal_grid_size - 1)
-        .for_each(|chunk| {
-            chunk.reverse();
-        });
+    let mut cs = cs.chunks_exact(grid_size);
 
     let mut val_index = 0;
 
-    for (i, c) in cs.iter().enumerate() {
-        let p = cs[i].get_pattern::<UIValuePattern>()?;
+    for i_row in 0..ideal_grid_size {
+        let row = cs.next().unwrap();
+        let mut row = row.iter().rev();
+        for i_col in 0..ideal_grid_size {
+            let cell = row.next().unwrap();
 
-        if p.is_readonly()? {
-            // eprintln!("Skipping readonly cell at ({}, {})", row, col);
-            continue;
-        }
-
-        let v = vals[val_index];
-
-        p.set_value(&format!("{}", v))?;
-
-        val_index += 1;
-    }
-
-    #[cfg(feature = "nope")]
-    for row in 0..ideal_grid_size {
-        // for col in (0..ideal_grid_size).rev()
-        for col in 0..ideal_grid_size {
-            let index = get_cell_index(grid_size, row, ideal_grid_size - col);
-
-            let p = cs[index].get_pattern::<UIValuePattern>()?;
+            let p = cell.get_pattern::<UIValuePattern>()?;
 
             if p.is_readonly()? {
                 // eprintln!("Skipping readonly cell at ({}, {})", row, col);
@@ -149,13 +134,6 @@ fn _send_purge_values_orca(automation: &UIAutomation, w: &UIElement, vals: &[u32
             }
 
             let v = vals[val_index];
-            eprintln!(
-                "Setting value for cell with index[{}] at ({}, {}): {}",
-                index,
-                row,
-                ideal_grid_size - col,
-                v
-            );
             p.set_value(&format!("{}", v))?;
 
             val_index += 1;

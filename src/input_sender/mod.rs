@@ -30,19 +30,20 @@ pub fn test_bs() -> Result<()> {
 
     #[rustfmt::skip]
     let purge_values = vec![
-        // 910, 920,
-        // 901, 921, 
-        // 902, 912,
         0, 1,
         2, 3,
         4, 5
-
-        // 1, 0, 
-        // 3, 2, 
-        // 5, 4,
     ];
 
-    let purge_values = vec![270, 210, 999, 470, 270, 170, 160, 180, 160, 999, 270, 170];
+    #[rustfmt::skip]
+    let purge_values = vec![
+        0, 1, 2,
+        3, 4, 5,
+        6, 7, 8,
+        9, 10, 11,
+    ];
+
+    // let purge_values = vec![270, 210, 999, 470, 270, 170, 160, 180, 160, 999, 270, 170];
 
     // automation::send_purge_values_bambu(&purge_values, false)?;
     automation::send_purge_values_orca(&purge_values)?;
