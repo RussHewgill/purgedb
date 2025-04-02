@@ -186,7 +186,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-// #[cfg(feature = "nope")]
+#[cfg(feature = "nope")]
 fn main() -> anyhow::Result<()> {
     input_sender::test_bs().unwrap();
 
@@ -194,7 +194,7 @@ fn main() -> anyhow::Result<()> {
 }
 
 /// main app
-#[cfg(feature = "nope")]
+// #[cfg(feature = "nope")]
 fn main() -> eframe::Result<()> {
     use gui::App;
 
