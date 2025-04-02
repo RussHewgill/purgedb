@@ -42,8 +42,10 @@ pub fn test_bs() -> Result<()> {
         // 5, 4,
     ];
 
-    automation::send_purge_values_bambu(&purge_values, false)?;
-    // automation::send_purge_values_orca(&purge_values)?;
+    let purge_values = vec![270, 210, 999, 470, 270, 170, 160, 180, 160, 999, 270, 170];
+
+    // automation::send_purge_values_bambu(&purge_values, false)?;
+    automation::send_purge_values_orca(&purge_values)?;
 
     // automation::swap_extruder()?;
 

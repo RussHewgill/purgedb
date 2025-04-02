@@ -550,6 +550,7 @@ impl App {
         }
 
         if orca {
+            eprintln!("orca purge_vals = {:?}", purge_vals);
             crate::input_sender::automation::send_purge_values_orca(&purge_vals)?;
         } else {
             crate::input_sender::automation::send_purge_values_bambu(&purge_vals, true)?;

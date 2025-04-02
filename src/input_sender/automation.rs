@@ -112,8 +112,30 @@ fn _send_purge_values_orca(automation: &UIAutomation, w: &UIElement, vals: &[u32
     // eprintln!("grid_size = {}", grid_size);
     // eprintln!("ideal_grid_size = {}", ideal_grid_size);
 
+    let mut vals = vals.to_vec();
+    vals.chunks_exact_mut(ideal_grid_size - 1)
+        .for_each(|chunk| {
+            chunk.reverse();
+        });
+
     let mut val_index = 0;
 
+    for (i, c) in cs.iter().enumerate() {
+        let p = cs[i].get_pattern::<UIValuePattern>()?;
+
+        if p.is_readonly()? {
+            // eprintln!("Skipping readonly cell at ({}, {})", row, col);
+            continue;
+        }
+
+        let v = vals[val_index];
+
+        p.set_value(&format!("{}", v))?;
+
+        val_index += 1;
+    }
+
+    #[cfg(feature = "nope")]
     for row in 0..ideal_grid_size {
         // for col in (0..ideal_grid_size).rev()
         for col in 0..ideal_grid_size {
@@ -129,7 +151,10 @@ fn _send_purge_values_orca(automation: &UIAutomation, w: &UIElement, vals: &[u32
             let v = vals[val_index];
             eprintln!(
                 "Setting value for cell with index[{}] at ({}, {}): {}",
-                index, row, col, v
+                index,
+                row,
+                ideal_grid_size - col,
+                v
             );
             p.set_value(&format!("{}", v))?;
 
