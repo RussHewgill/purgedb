@@ -3,11 +3,11 @@ pub mod history;
 use std::collections::HashMap;
 
 use crate::{
-    gui::{history_tab::HistoryRow, new_filament::NewFilament},
+    gui::{MinSavedState, history_tab::HistoryRow, new_filament::NewFilament},
     types::{Filament, FilamentMap},
 };
 use hex_color::HexColor;
-use rusqlite::{params, Connection, Result};
+use rusqlite::{Connection, Result, params};
 
 const CACHE_DURATION: std::time::Duration = std::time::Duration::from_secs(30);
 
@@ -93,6 +93,8 @@ impl Db {
                     &colors,
                     material,
                     notes,
+                    false,
+                    false,
                 ))
             },
         )
@@ -149,16 +151,25 @@ impl Db {
                 &colors,
                 material,
                 notes,
+                false,
+                false,
             ))
         })?;
-        let xs = iter
-            .flatten()
-            // .enumerate()
-            // .map(|(i, x)| (i as u32, x))
-            .map(|f| (f.id, f))
-            .collect::<Vec<_>>();
-        // let map = FilamentMap::new(xs.iter().map(|x| (x.id, x.clone())).collect());
-        let map = FilamentMap::new(xs.iter().map(|(i, x)| (*i as u32, x.clone())).collect());
+        let xs = iter.flatten().map(|f| (f.id, f)).collect::<Vec<_>>();
+
+        let mut map = FilamentMap::new(xs.iter().map(|(i, x)| (*i as u32, x.clone())).collect());
+
+        let (default_w, default_b) = self.get_default_black_white()?;
+        if let Some(id) = default_w {
+            if let Some(f) = map.filaments.get_mut(&id) {
+                f.set_default_white();
+            }
+        }
+        if let Some(id) = default_b {
+            if let Some(f) = map.filaments.get_mut(&id) {
+                f.set_default_black();
+            }
+        }
 
         self.cache_filaments = (map.clone(), xs.clone());
         self.stale_filament = false;
@@ -240,7 +251,7 @@ impl Db {
     }
 }
 
-/// new, modify filament
+/// modify, get filament, purge values
 impl Db {
     pub fn delete_filament(&mut self, id: u32) -> Result<()> {
         match self.db.as_ref().unwrap().execute(
@@ -399,7 +410,86 @@ impl Db {
         // Ok(froms?.chain(tos?).flatten().collect())
         Ok(out)
     }
+}
 
+#[cfg(feature = "nope")]
+impl Db {
+    pub fn set_config(&mut self, key: &str, value: &str) -> Result<()> {
+        self.db.as_ref().unwrap().execute(
+            "INSERT OR REPLACE INTO config (key, value) VALUES (?1, ?2)",
+            params![key, value],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_config(&self, key: &str) -> Result<String> {
+        self.db.as_ref().unwrap().query_row(
+            "SELECT value FROM config WHERE key = ?1",
+            [key],
+            |row| row.get(0),
+        )
+    }
+
+    pub fn get_config_or_default(&self, key: &str, default: &str) -> String {
+        self.get_config(key).unwrap_or_else(|_| default.to_string())
+    }
+
+    pub fn delete_config(&mut self, key: &str) -> Result<()> {
+        self.db
+            .as_ref()
+            .unwrap()
+            .execute("DELETE FROM config WHERE key = ?1", [key])?;
+        Ok(())
+    }
+
+    pub fn get_all_configs(&self) -> Result<HashMap<String, String>> {
+        let mut stmt = self
+            .db
+            .as_ref()
+            .unwrap()
+            .prepare("SELECT key, value FROM config")?;
+        let config_iter = stmt.query_map([], |row| {
+            let key: String = row.get(0)?;
+            let value: String = row.get(1)?;
+            Ok((key, value))
+        })?;
+
+        Ok(config_iter.flatten().collect())
+    }
+}
+
+/// State
+impl Db {
+    pub fn save_state(&mut self, state: &MinSavedState) -> Result<()> {
+        let Ok(s) = ron::ser::to_string(state) else {
+            eprintln!("Error serializing state: {:?}", state);
+            return Err(rusqlite::Error::InvalidQuery);
+        };
+        self.db.as_ref().unwrap().execute(
+            "INSERT OR REPLACE INTO saved_state (id, state) VALUES (?1, ?2)",
+            (0, s),
+        )?;
+        Ok(())
+    }
+
+    pub fn get_state(&self) -> Result<MinSavedState> {
+        let s: String = self.db.as_ref().unwrap().query_row(
+            "SELECT state FROM saved_state WHERE id = ?1",
+            [0],
+            |row| row.get(0),
+        )?;
+
+        if let Ok(state) = ron::de::from_str::<MinSavedState>(&s) {
+            return Ok(state);
+        }
+
+        eprintln!("Error deserializing state: {:?}", s);
+        Err(rusqlite::Error::InvalidQuery)
+    }
+}
+
+/// new, reload
+impl Db {
     pub fn reload<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
         let db = self.db.take().unwrap();
         if let Err(e) = db.close() {
@@ -415,6 +505,50 @@ impl Db {
 
     pub fn get_db(&self) -> &Connection {
         self.db.as_ref().unwrap()
+    }
+
+    pub fn set_default_black(&mut self, id: u32) -> Result<()> {
+        self.db.as_ref().unwrap().execute(
+            "INSERT OR REPLACE INTO default_filaments (id, color) VALUES (?1, ?2)",
+            (id, "black"),
+        )?;
+        Ok(())
+    }
+
+    pub fn set_default_white(&mut self, id: u32) -> Result<()> {
+        self.db.as_ref().unwrap().execute(
+            "INSERT OR REPLACE INTO default_filaments (id, color) VALUES (?1, ?2)",
+            (id, "white"),
+        )?;
+        Ok(())
+    }
+
+    pub fn get_default_black_white(&self) -> Result<(Option<u32>, Option<u32>)> {
+        let mut stmt =
+            self.db.as_ref().unwrap().prepare(
+                "SELECT id, color FROM default_filaments WHERE color = ?1 OR color = ?2",
+            )?;
+        let iter = stmt
+            .query_map(["black", "white"], |row| {
+                let id: u32 = row.get(0)?;
+                let color: String = row.get(1)?;
+                Ok((id, color))
+            })?
+            .flatten()
+            .collect::<Vec<_>>();
+
+        let mut out_w = None;
+        let mut out_b = None;
+
+        for (x, c) in iter {
+            if c == "black" {
+                out_b = Some(x);
+            } else if c == "white" {
+                out_w = Some(x);
+            }
+        }
+
+        Ok((out_b, out_w))
     }
 
     pub fn new<P: AsRef<std::path::Path>>(path: P) -> Result<Self> {
@@ -462,6 +596,32 @@ impl Db {
           purge       INTEGER NOT NULL,
           UNIQUE(id_from, id_to)
       )",
+            (), // empty list of parameters.
+        )?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS default_filaments (
+          id          INTEGER PRIMARY KEY,
+          color       TEXT,
+          UNIQUE(id, color)
+      )",
+            (), // empty list of parameters.
+        )?;
+
+        //     conn.execute(
+        //         "CREATE TABLE IF NOT EXISTS settings (
+        //       key         TEXT PRIMARY KEY,
+        //       value       TEXT,
+        //       UNIQUE(key, value)
+        //   )",
+        //         (), // empty list of parameters.
+        //     )?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS saved_state (
+              id          INTEGER PRIMARY KEY,
+              state       TEXT
+          )",
             (), // empty list of parameters.
         )?;
 

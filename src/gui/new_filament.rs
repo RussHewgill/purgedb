@@ -1,3 +1,6 @@
+use anyhow::{Context, Result, anyhow, bail, ensure};
+use tracing::{debug, error, info, trace, warn};
+
 use egui::RichText;
 use egui_extras::{Column, TableBuilder};
 use hex_color::HexColor;
@@ -6,7 +9,7 @@ use crate::types::Material;
 
 use super::{App, filament_picker::FilamentPicker, text_val::ValText};
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct NewFilament {
     row_id: Option<u32>,
     pub name: String,
@@ -196,11 +199,17 @@ impl App {
                     if ui.button("Set as default White").clicked() {
                         if let Some(id) = self.new_filament.selected {
                             self.default_white = id;
+                            if let Err(e) = self.db.set_default_white(id) {
+                                error!("Error setting default white filament: {}", e);
+                            }
                         }
                     }
                     if ui.button("Set as default black").clicked() {
                         if let Some(id) = self.new_filament.selected {
                             self.default_black = id;
+                            if let Err(e) = self.db.set_default_black(id) {
+                                error!("Error setting default black filament: {}", e);
+                            }
                         }
                     }
                 });
@@ -214,6 +223,7 @@ impl App {
                                 &mut self.new_filament.selected,
                                 Some(f.id),
                                 f.colored_name(ui.ctx()),
+                                // f.colored_name_with_def(ui.ctx()),
                             );
                         }
                     } else {
@@ -224,6 +234,7 @@ impl App {
                                 &mut self.new_filament.selected,
                                 Some(f.0),
                                 f.1.colored_name(ctx),
+                                // f.1.colored_name_with_def(ui.ctx()),
                             );
                         }
                     }

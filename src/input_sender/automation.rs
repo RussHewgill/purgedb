@@ -215,11 +215,22 @@ fn set_extruder(automation: &UIAutomation, w: &UIElement, extruder: Extruder) ->
         None,
     )?;
 
+    // let mut cache_request = automation.create_cache_request()?;
+    // cache_request.add_pattern(uiautomation::patterns::UIPatternType::Value)?;
+
     let cs = w.find_all(uiautomation::types::TreeScope::Descendants, &p)?;
+    // let cs = w.find_all_build_cache(
+    //     uiautomation::types::TreeScope::Descendants,
+    //     &p,
+    //     &cache_request,
+    // )?;
 
     eprintln!("cs.len() = {}", cs.len());
 
-    let c = &cs[0];
+    // let c = &cs[0];
+    let Some(c) = cs.get(0) else {
+        bail!("Could not find extruder combobox");
+    };
 
     let p = c.get_pattern::<UIValuePattern>()?;
     let v = p.get_value()?;

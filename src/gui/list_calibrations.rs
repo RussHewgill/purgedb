@@ -6,7 +6,7 @@ use crate::types::{Filament, FilamentMap};
 
 use super::{App, filament_picker::FilamentPicker, history_tab::SortOrder};
 
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ListCalibrations {
     picker: FilamentPicker,
     sort: Option<(usize, SortOrder)>,
@@ -163,22 +163,17 @@ impl App {
                     }
                 }
 
-                let snapshot = self.nucleo.as_ref().unwrap().snapshot();
+                // let snapshot = self.nucleo.as_ref().unwrap().snapshot();
 
-                let snapshot = snapshot
-                    .matched_items(..)
-                    .map(|f| f.data.0)
-                    .collect::<HashSet<_>>();
+                // let snapshot = snapshot
+                //     .matched_items(..)
+                //     .map(|f| f.data.0)
+                //     .collect::<HashSet<_>>();
 
-                // for f in snapshot.matched_items(..) {
-                //     let Some((id, (from, to))) = table.iter().find(|(id, _)| *id == f.data.0)
-                //     else {
-                //         continue;
-                //     };
                 for (id, (from, to)) in table.iter() {
-                    if !snapshot.contains(id) {
-                        continue;
-                    }
+                    // if !snapshot.contains(id) {
+                    //     continue;
+                    // }
 
                     let Some(filament2) = filament_map.get(id) else {
                         continue;
@@ -198,12 +193,6 @@ impl App {
                         });
                     });
                 }
-
-                // for (from_id, to, filament) in self.calibration_list.filament_table.iter() {
-                //     if *id == picked_id {
-                //         continue;
-                //     }
-                // }
             });
     }
 }

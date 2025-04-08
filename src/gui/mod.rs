@@ -1,3 +1,6 @@
+use anyhow::{Context, Result, anyhow, bail, ensure};
+use tracing::{debug, error, info, trace, warn};
+
 pub mod enter_purge;
 pub mod filament_grid;
 pub mod filament_picker;
@@ -5,6 +8,7 @@ pub mod filament_picker;
 // pub mod get_purge;
 // pub mod edit_filament;
 // pub mod dropdown;
+pub mod enter_purge2;
 pub mod history_tab;
 pub mod list_calibrations;
 pub mod new_filament;
@@ -15,7 +19,7 @@ use crate::{db::Db, types::Filament};
 
 use self::{enter_purge::EnterPurge, filament_grid::FilamentGrid, new_filament::NewFilament};
 
-#[derive(PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Tab {
     // GetPurgeValues,
     EnterPurgeValues,
@@ -77,6 +81,51 @@ pub struct App {
     default_black: u32,
 }
 
+/// Minimal saved state for storing in the database
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct MinSavedState {
+    current_tab: Tab,
+    db_path: std::path::PathBuf,
+
+    new_filament: NewFilament,
+    enter_purge: EnterPurge,
+    filament_grid: FilamentGrid,
+    calibration_list: list_calibrations::ListCalibrations,
+
+    default_white: u32,
+    default_black: u32,
+}
+
+impl MinSavedState {
+    pub fn from_app(app: &App) -> Self {
+        Self {
+            current_tab: app.current_tab.clone(),
+            db_path: app.db_path.clone(),
+
+            new_filament: app.new_filament.clone(),
+            enter_purge: app.enter_purge.clone(),
+            filament_grid: app.filament_grid.clone(),
+            calibration_list: app.calibration_list.clone(),
+
+            default_white: app.default_white,
+            default_black: app.default_black,
+        }
+    }
+
+    pub fn load_to_app(&self, app: &mut App) {
+        app.current_tab = self.current_tab.clone();
+        app.db_path = self.db_path.clone();
+
+        app.new_filament = self.new_filament.clone();
+        app.enter_purge = self.enter_purge.clone();
+        app.filament_grid = self.filament_grid.clone();
+        app.calibration_list = self.calibration_list.clone();
+
+        app.default_white = self.default_white;
+        app.default_black = self.default_black;
+    }
+}
+
 impl Default for App {
     fn default() -> Self {
         let db_path = std::path::PathBuf::from("test.db");
@@ -93,6 +142,14 @@ impl Default for App {
         // );
 
         // let injector = filter.injector();
+
+        let (default_white, default_black) = {
+            if let Ok((b, w)) = db.get_default_black_white() {
+                (w.unwrap_or(1), b.unwrap_or(2))
+            } else {
+                (1, 2)
+            }
+        };
 
         Self {
             db,
@@ -121,8 +178,8 @@ impl Default for App {
             injector: None,
             updated_filaments: false,
 
-            default_white: 1,
-            default_black: 2,
+            default_white,
+            default_black,
         }
     }
 }
@@ -139,6 +196,8 @@ impl App {
         } else {
             Default::default()
         };
+
+        // if let
 
         out.list_sort = Some((0, history_tab::SortOrder::Descending));
 
@@ -192,6 +251,11 @@ impl App {
 // #[cfg(feature = "nope")]
 impl eframe::App for App {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        let s = MinSavedState::from_app(&self);
+        if let Err(e) = self.db.save_state(&s) {
+            error!("Error saving state: {:?}", e);
+        }
+
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 

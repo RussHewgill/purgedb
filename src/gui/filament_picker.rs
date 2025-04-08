@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use egui::{text::LayoutJob, Color32, FontFamily, FontId, Response, TextFormat};
+use egui::{Color32, FontFamily, FontId, Response, TextFormat, text::LayoutJob};
 
 use crate::types::{Filament, FilamentMap};
 
@@ -110,6 +110,8 @@ impl FilamentPicker {
                 })
                 .show_ui(ui, |ui| {
                     // eprintln!("ui.available_width() = {}", ui.available_width());
+
+                    ui.selectable_value(&mut self.selected, None, "None");
 
                     if filter {
                         // log::debug!("matched_item_count = {}", n);

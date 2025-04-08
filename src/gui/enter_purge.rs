@@ -1,7 +1,7 @@
 use super::{App, filament_picker::FilamentPicker};
 use crate::types::Filament;
 
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct EnterPurge {
     // filament1: Filament,
     // filament2: Filament,
@@ -187,14 +187,14 @@ impl App {
                     _ => {}
                 }
 
-                ui.separator();
-                ui.horizontal(|ui| {
-                    ui.checkbox(self.filament_grid.use_multiplier_mut(), "Use multiplier");
-                    let drag = egui::DragValue::new(self.filament_grid.multiplier_mut())
-                        .update_while_editing(false)
-                        .max_decimals(3);
-                    ui.add(drag);
-                });
+                // ui.separator();
+                // ui.horizontal(|ui| {
+                //     ui.checkbox(self.filament_grid.use_multiplier_mut(), "Use multiplier");
+                //     let drag = egui::DragValue::new(self.filament_grid.multiplier_mut())
+                //         .update_while_editing(false)
+                //         .max_decimals(3);
+                //     ui.add(drag);
+                // });
                 ui.horizontal(|ui| {
                     ui.checkbox(self.filament_grid.use_offset_mut(), "Use offset");
                     let drag = egui::DragValue::new(self.filament_grid.offset_mut())

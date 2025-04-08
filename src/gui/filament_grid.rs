@@ -6,7 +6,7 @@ use crate::types::{Filament, FilamentMap};
 
 use super::{App, filament_picker::FilamentPicker, history_tab::HistoryRow, text_val::ValText};
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FilamentGrid {
     // current: usize,
     // current: FilamentGridData,
@@ -240,13 +240,18 @@ impl FilamentGrid {
 
 impl App {
     pub fn show_filament_grid(&mut self, ui: &mut egui::Ui) {
-        let filaments = self.db.get_all_filaments().unwrap();
+        let Ok(filaments) = self.db.get_all_filaments() else {
+            ui.label("No filaments found");
+            return;
+        };
         // let keywords = self.db.get_all_searchable_keywords().unwrap();
         self.update_filtered_filaments(&filaments.0);
 
         egui::Frame::new()
             .outer_margin(5.)
             .inner_margin(5.)
+            // .corner_radius(ui.style().visuals.widgets.noninteractive.corner_radius)
+            // .stroke(ui.style().visuals.widgets.noninteractive.bg_stroke)
             .show(ui, |ui| {
                 // ui.visuals_mut().override_text_color = Some(egui::Color32::BLACK);
                 ui.horizontal(|ui| {
@@ -262,6 +267,13 @@ impl App {
                         let f = self.db.get_filament(self.default_white).unwrap();
                         // *self.filament_grid.pickers_mut()[2].selected_mut() = Some(f);
                         self.filament_grid.pickers_mut()[2].set_selected(Some(f));
+                    }
+
+                    if ui.button("Send to purge inputs").clicked() {
+                        // if let Err(e) = self.send_purge_values(self.filament_grid.num_filaments(), false) {
+                        //     eprintln!("send_purge_values error: {:?}", e);
+                        // }
+                        todo!("TODO");
                     }
                 });
 
@@ -522,11 +534,17 @@ impl App {
 
         for from_id in 0..num_filaments {
             let Some(from) = &self.filament_grid.pickers()[from_id].selected() else {
-                panic!("missing from");
+                // panic!("missing from");
+                for to_id in 0..num_filaments - 1 {
+                    purge_vals.push(999);
+                }
+                continue;
             };
             for to_id in 0..num_filaments {
                 let Some(to) = &self.filament_grid.pickers()[to_id].selected() else {
-                    panic!("missing to");
+                    // panic!("missing to");
+                    purge_vals.push(999);
+                    continue;
                 };
                 if from_id == to_id {
                     continue;
@@ -553,7 +571,11 @@ impl App {
             eprintln!("orca purge_vals = {:?}", purge_vals);
             crate::input_sender::automation::send_purge_values_orca(&purge_vals)?;
         } else {
-            crate::input_sender::automation::send_purge_values_bambu(&purge_vals, true)?;
+            if let Err(e) =
+                crate::input_sender::automation::send_purge_values_bambu(&purge_vals, true)
+            {
+                crate::input_sender::automation::send_purge_values_bambu(&purge_vals, true)?;
+            }
         }
 
         Ok(())

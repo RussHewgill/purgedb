@@ -1,7 +1,10 @@
+use anyhow::{Context, Result, anyhow, bail, ensure};
+use tracing::{debug, error, info, trace, warn};
+
 use std::collections::HashMap;
 
 use egui::{
-    Rect, RichText,
+    Color32, Rect, RichText,
     text::{LayoutJob, TextWrapping},
 };
 use hex_color::HexColor;
@@ -17,6 +20,8 @@ pub struct Filament {
     pub colors: Vec<HexColor>,
     pub material: String,
     pub notes: String,
+    pub default_white: bool,
+    pub default_black: bool,
 }
 
 impl Filament {
@@ -28,6 +33,8 @@ impl Filament {
         colors: &[HexColor],
         material: String,
         notes: String,
+        default_white: bool,
+        default_black: bool,
     ) -> Self {
         Self {
             id,
@@ -37,7 +44,19 @@ impl Filament {
             colors: colors.to_vec(),
             material,
             notes,
+            default_white,
+            default_black,
         }
+    }
+
+    pub fn set_default_white(&mut self) {
+        self.default_white = true;
+        self.default_black = false;
+    }
+
+    pub fn set_default_black(&mut self) {
+        self.default_black = true;
+        self.default_white = false;
     }
 
     pub fn colored_box_vert(&self, ui: &mut egui::Ui) {
@@ -45,7 +64,9 @@ impl Filament {
         let transparent = egui::Color32::from_rgba_premultiplied(0, 0, 0, 0);
         // let stroke = (1.0, egui::Color32::BLACK);
 
-        ui.vertical(|ui| {
+        let layout = egui::Layout::top_down(egui::Align::Min);
+
+        ui.with_layout(layout, |ui| {
             let (response, painter) =
                 ui.allocate_painter(egui::vec2(square_size, square_size), egui::Sense::hover());
             let rect = Rect::from_min_size(response.rect.min, egui::vec2(square_size, square_size));
@@ -178,6 +199,39 @@ impl Filament {
                 ..Default::default()
             },
         );
+
+        job
+    }
+
+    #[cfg(feature = "nope")]
+    pub fn colored_name_with_def(&self, ctx: &egui::Context) -> LayoutJob {
+        let mut job = self.colored_name(ctx);
+
+        let text = "\u{2B1B}";
+
+        if self.default_black {
+            job.append(
+                text,
+                0.0,
+                egui::TextFormat {
+                    color: egui::Color32::BLACK,
+                    ..Default::default()
+                },
+            );
+        }
+
+        if self.default_white {
+            debug!("default_white = {}", self.default_white);
+
+            job.append(
+                text,
+                0.0,
+                egui::TextFormat {
+                    color: egui::Color32::WHITE,
+                    ..Default::default()
+                },
+            );
+        }
 
         job
     }
