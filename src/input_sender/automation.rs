@@ -148,7 +148,10 @@ pub fn send_purge_values_bambu(vals: &[u32], both: bool) -> Result<()> {
     let w = find_purge_window_bambu(&automation)?;
 
     if both {
-        set_extruder(&automation, &w, Extruder::Left)?;
+        if let Err(e) = set_extruder(&automation, &w, Extruder::Left) {
+            eprintln!("Warning: failed to set extruder to left: {}", e);
+        }
+        // set_extruder(&automation, &w, Extruder::Left)?;
     }
 
     _send_purge_values_bambu(&automation, &w, vals)?;
