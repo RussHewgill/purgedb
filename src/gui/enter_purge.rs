@@ -158,7 +158,10 @@ impl App {
                                     (true, false) => {
                                         (p as f32 * self.filament_grid.multiplier()) as u32
                                     }
-                                    (false, true) => p - self.filament_grid.offset(),
+                                    (false, true) => {
+                                        let x = p as i32 - self.filament_grid.offset();
+                                        x.max(0) as u32
+                                    }
                                     (false, false) => p,
                                 };
                                 // let p = if self.filament_grid.use_offset() {
@@ -177,7 +180,10 @@ impl App {
                                     (true, false) => {
                                         (p as f32 * self.filament_grid.multiplier()) as u32
                                     }
-                                    (false, true) => p - self.filament_grid.offset(),
+                                    (false, true) => {
+                                        let x = p as i32 - self.filament_grid.offset();
+                                        x.max(0) as u32
+                                    }
                                     (false, false) => p,
                                 };
                                 self.db.set_purge_values(f2.id, f1.id, p).unwrap();

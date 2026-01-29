@@ -339,7 +339,8 @@ fn find_purge_window_bambu(automation: &UIAutomation) -> Result<UIElement> {
             .from(bambu_window.clone())
             .timeout(100)
             .depth(2)
-            .name("Flushing volumes for filament change")
+            // .name("Flushing volumes for filament change")
+            .name("Purging volumes for filament change")
             .classname("#32770")
             .find_all()
         else {

@@ -33,7 +33,7 @@ pub struct FilamentGridData {
     // cells: [[valtext<u32>; 16]; 16],
     pub multiplier: f32,
     pub use_multiplier: bool,
-    pub offset: u32,
+    pub offset: i32,
     pub use_offset: bool,
     pub override_num_filaments: (bool, usize),
 }
@@ -69,7 +69,7 @@ impl FilamentGridData {
         }
 
         if let Some(o) = history.offset {
-            self.offset = o as u32;
+            self.offset = o as i32;
             self.use_offset = true;
         } else {
             self.offset = 0;
@@ -85,7 +85,7 @@ pub struct FilamentGridSave {
     pub num_filaments: usize,
     pub multiplier: f32,
     pub use_multiplier: bool,
-    pub offset: u32,
+    pub offset: i32,
     pub use_offset: bool,
 }
 
@@ -187,12 +187,12 @@ impl FilamentGrid {
         &mut self.current.num_filaments
     }
 
-    pub fn offset(&self) -> u32 {
+    pub fn offset(&self) -> i32 {
         // self.grids[self.current].offset
         self.current.offset
     }
 
-    pub fn offset_mut(&mut self) -> &mut u32 {
+    pub fn offset_mut(&mut self) -> &mut i32 {
         // &mut self.grids[self.current].offset
         &mut self.current.offset
     }
@@ -382,7 +382,9 @@ impl App {
                                                             );
                                                         }
                                                         (false, true) => {
-                                                            purge + self.filament_grid.offset()
+                                                            let x = purge as i32
+                                                                + self.filament_grid.offset();
+                                                            x.max(0) as u32
                                                         }
                                                         (false, false) => purge,
                                                     };
@@ -557,7 +559,10 @@ impl App {
                     ) {
                         (true, true) => p,
                         (true, false) => (p as f32 * self.filament_grid.multiplier()) as u32,
-                        (false, true) => p + self.filament_grid.offset(),
+                        (false, true) => {
+                            let x = p as i32 + self.filament_grid.offset();
+                            x.max(0) as u32
+                        }
                         (false, false) => p,
                     };
                     purge_vals.push(purge);
