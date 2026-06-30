@@ -97,7 +97,8 @@ fn get_cell_index(grid_size: usize, row: usize, col: usize) -> usize {
 fn _send_purge_values_orca(automation: &UIAutomation, w: &UIElement, vals: &[u32]) -> Result<()> {
     let p_edit = automation.create_property_condition(
         uiautomation::types::UIProperty::ControlType,
-        50004.into(), // edit
+        // 50004.into(), // edit
+        50016.into(), // spinner
         None,
     )?;
 

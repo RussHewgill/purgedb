@@ -218,19 +218,23 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(feature = "nope")]
 fn main() {
-    use db::Db;
+    let vals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    let db = Db::new().unwrap();
+    input_sender::automation::send_purge_values_bambu(&vals, true).unwrap();
 
-    // db.test_filaments().unwrap();
+    // use db::Db;
 
-    // let xs = db.get_all_filaments().unwrap();
+    // let db = Db::new().unwrap();
 
-    // let xs = db.get_all_searchable_keywords().unwrap();
+    // // db.test_filaments().unwrap();
 
-    let xs = db.get_purge_values(1, 2).unwrap();
+    // // let xs = db.get_all_filaments().unwrap();
 
-    // eprintln!("wat 0");
-    // let r = xs.search_names("poly");
-    eprintln!("xs = {:?}", xs);
+    // // let xs = db.get_all_searchable_keywords().unwrap();
+
+    // let xs = db.get_purge_values(1, 2).unwrap();
+
+    // // eprintln!("wat 0");
+    // // let r = xs.search_names("poly");
+    // eprintln!("xs = {:?}", xs);
 }
